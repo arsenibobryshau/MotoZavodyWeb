@@ -1,0 +1,27 @@
+@model IEnumerable<MotoZavodyWeb.Models.Organizace>
+
+    @{
+    ViewData["Title"] = "Organizátoøi závodù";
+    }
+
+    <h2>@ViewData["Title"]</h2>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Závod</th>
+                <th>Organizátor</th>
+                <th>Pozice</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var o in Model)
+            {
+            <tr>
+                <td>@o.Zavod.Nazev</td>
+                <td>@o.Zamestnanec.Jmeno @o.Zamestnanec.Prijmeni</td>
+                <td>@o.Zamestnanec.Pozice.Nazev</td>
+            </tr>
+            }
+        </tbody>
+    </table>

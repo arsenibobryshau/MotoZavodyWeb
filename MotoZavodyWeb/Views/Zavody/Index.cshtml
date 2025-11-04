@@ -1,0 +1,33 @@
+@model IEnumerable<MotoZavodyWeb.Models.Zavod>
+
+    @{
+    ViewData["Title"] = "Všechny závody";
+    }
+
+    <h2>@ViewData["Title"]</h2>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Název</th>
+                <th>Datum</th>
+                <th>Typ</th>
+                <th>Místo</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var z in Model)
+            {
+            <tr>
+                <td>@z.Nazev</td>
+                <td>@z.Datum.ToShortDateString()</td>
+                <td>@z.TypZavodu.Nazev</td>
+                <td>@z.Misto.Nazev</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@z.IdZavod">Detail</a>
+                </td>
+            </tr>
+            }
+        </tbody>
+    </table>

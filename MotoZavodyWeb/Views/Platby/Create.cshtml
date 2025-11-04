@@ -1,0 +1,32 @@
+@model MotoZavodyWeb.Models.Platba
+
+@{
+    ViewData["Title"] = "Platba za závod";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="Create" method="post">
+    <input type="hidden" name="idZavodnik" value="@ViewBag.IdZavodnik" />
+    <input type="hidden" name="idZavod" value="@ViewBag.IdZavod" />
+
+    <div class="mb-3">
+        <label asp-for="Castka" class="form-label"></label>
+        <input asp-for="Castka" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Datum" class="form-label"></label>
+        <input asp-for="Datum" class="form-control" type="date" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Typ" class="form-label">Typ platby</label>
+        <select asp-for="Typ" class="form-select">
+            <option value="HOTOVE">Hotovì</option>
+            <option value="KARTOU">Kartou</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Zaplatit</button>
+</form>

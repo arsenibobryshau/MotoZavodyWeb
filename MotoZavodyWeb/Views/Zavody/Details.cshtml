@@ -1,0 +1,26 @@
+@model MotoZavodyWeb.Models.Zavod
+
+@{
+    ViewData["Title"] = "Detail závodu";
+}
+
+<h2>@Model.Nazev</h2>
+
+<dl class="row">
+    <dt class="col-sm-2">Datum</dt>
+    <dd class="col-sm-10">@Model.Datum.ToShortDateString()</dd>
+
+    <dt class="col-sm-2">Místo</dt>
+    <dd class="col-sm-10">@Model.Misto.Nazev</dd>
+
+    <dt class="col-sm-2">Typ</dt>
+    <dd class="col-sm-10">@Model.TypZavodu.Nazev</dd>
+
+    <dt class="col-sm-2">Startovné</dt>
+    <dd class="col-sm-10">@Model.Startovne</dd>
+
+    <dt class="col-sm-2">Hodnocení</dt>
+    <dd class="col-sm-10">@Model.Hodnoceni.Metoda</dd>
+</dl>
+
+<a asp-action="Register" asp-route-id="@Model.IdZavod" class="btn btn-primary">Registrovat se</a>

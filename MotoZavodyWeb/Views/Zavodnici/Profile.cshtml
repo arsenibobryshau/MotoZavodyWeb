@@ -1,0 +1,23 @@
+@model MotoZavodyWeb.Models.Zavodnik
+
+@{
+    ViewData["Title"] = "Profil závodníka";
+}
+
+<h2>@Model.Jmeno @Model.Prijmeni</h2>
+
+<p>Vìk: @Model.Vek</p>
+<p>Pohlaví: @Model.Pohlavi</p>
+<p>Úroveò zkušeností: @Model.UrovenZkusenosti</p>
+
+<h3>Stroje</h3>
+<ul>
+    @foreach (var j in Model.JezdiNa)
+    {
+    <li>@j.Kolobezka.Znacka @j.Kolobezka.Model</li>
+    }
+</ul>
+
+<p>
+    <a asp-action="MyRaces" asp-route-id="@Model.IdZavodnik">Moje závody</a>
+</p>

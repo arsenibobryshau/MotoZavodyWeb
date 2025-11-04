@@ -1,0 +1,18 @@
+@model MotoZavodyWeb.Models.Ucast
+
+@{
+    ViewData["Title"] = "Registrace na závod";
+}
+
+<h2>Registrace na závod @Model.IdZavod</h2>
+
+<form asp-action="Register" method="post">
+    <input type="hidden" asp-for="IdZavod" />
+
+    <div class="mb-3">
+        <label asp-for="IdZavodnik" class="form-label">ID závodníka</label>
+        <input asp-for="IdZavodnik" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Registrovat</button>
+</form>

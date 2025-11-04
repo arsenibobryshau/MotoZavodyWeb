@@ -1,0 +1,29 @@
+@model IEnumerable<MotoZavodyWeb.Models.Ucast>
+
+    @{
+    ViewData["Title"] = "Moje závody";
+    }
+
+    <h2>@ViewData["Title"]</h2>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Závod</th>
+                <th>Datum</th>
+                <th>Poøadí</th>
+                <th>Výsledek</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in Model)
+            {
+            <tr>
+                <td>@u.Zavod.Nazev</td>
+                <td>@u.Zavod.Datum.ToShortDateString()</td>
+                <td>@u.Poradi</td>
+                <td>@u.Vysledek</td>
+            </tr>
+            }
+        </tbody>
+    </table>

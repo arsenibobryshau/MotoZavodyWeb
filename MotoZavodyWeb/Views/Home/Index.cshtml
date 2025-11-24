@@ -20,7 +20,7 @@
             {
             <tr>
                 <td>@z.Nazev</td>
-                <td>@z.Datum.ToShortDateString()</td>
+                <td>@z.Datum?.ToShortDateString()</td>
                 <td>@z.Startovne</td>
                 <td>
                     <a asp-controller="Zavody" asp-action="Details" asp-route-id="@z.IdZavod">

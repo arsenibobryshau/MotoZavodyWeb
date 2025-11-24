@@ -1,14 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using MotoZavodyWeb.Data;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // MVC
 builder.Services.AddControllersWithViews();
 
-// DbContext – napojení na connection string z appsettings.json
 builder.Services.AddDbContext<ZavodyContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("MotoZavodyConnection")));
+    options.UseOracle(builder.Configuration.GetConnectionString("OracleDb")));
+
+//// DbContext – napojení na connection string z appsettings.json
+//builder.Services.AddDbContext<ZavodyContext>(options =>
+//    options.UseSqlServer(builder.Configuration.GetConnectionString("MotoZavodyConnection")));
 
 var app = builder.Build();
 

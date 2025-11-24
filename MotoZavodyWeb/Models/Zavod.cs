@@ -7,7 +7,7 @@ namespace MotoZavodyWeb.Models
     {
         public int IdZavod { get; set; }
         public string Nazev { get; set; } = null!;
-        public DateTime Datum { get; set; }
+        public DateTime? Datum { get; set; }
         public decimal Startovne { get; set; }
 
         public int IdTypZavodu { get; set; }

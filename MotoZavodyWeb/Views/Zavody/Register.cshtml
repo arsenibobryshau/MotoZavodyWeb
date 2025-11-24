@@ -4,15 +4,20 @@
     ViewData["Title"] = "Registrace na závod";
 }
 
-<h2>Registrace na závod @Model.IdZavod</h2>
+<h2 class="mb-4">Registrace na závod @Model.IdZavod</h2>
 
-<form asp-action="Register" method="post">
-    <input type="hidden" asp-for="IdZavod" />
+<div class="card p-4 shadow-sm">
 
-    <div class="mb-3">
-        <label asp-for="IdZavodnik" class="form-label">ID závodníka</label>
-        <input asp-for="IdZavodnik" class="form-control" />
-    </div>
+    <form asp-action="Register" method="post">
+        <input type="hidden" asp-for="IdZavod" />
 
-    <button type="submit" class="btn btn-primary">Registrovat</button>
-</form>
+        <div class="mb-3">
+            <label asp-for="IdZavodnik" class="form-label">ID závodníka</label>
+            <input asp-for="IdZavodnik" class="form-control" />
+            <span asp-validation-for="IdZavodnik" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-success">Registrovat</button>
+    </form>
+
+</div>

@@ -30,9 +30,17 @@ app.UseRouting();
 
 app.UseAuthorization();
 
-// default route
+// Explicitní redirect z koøene na Home/Index
+app.MapGet("/", context =>
+{
+    context.Response.Redirect("/Home/Index");
+    return Task.CompletedTask;
+});
+
+// default route pro MVC
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+

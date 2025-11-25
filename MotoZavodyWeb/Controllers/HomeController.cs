@@ -13,32 +13,18 @@ namespace MotoZavodyWeb.Controllers
             _context = context;
         }
 
-        //public async Task<IActionResult> Index()
-        //{
-        //    // Nadcházející závody (dnes a dál)
-        //    var today = DateTime.Today;
-
-        //    var zavody = await _context.Zavody
-        //        .Where(z => z.Datum >= today)
-        //        .OrderBy(z => z.Datum)
-        //        .Take(10)
-        //        .ToListAsync();
-
-        //    return View(zavody);
-        //}
-
-        public IActionResult TestDb()
+        // /  nebo /Home/Index
+        public IActionResult Index()
         {
-            try
-            {
-                var count = _context.Zavody.Count(); // Pouzije tabulku Zavody
-                return Content($"DB OK! Záznamù v ZAVODY: {count}");
-            }
-            catch (Exception ex)
-            {
-                return Content("Chyba DB: " + ex.Message);
-            }
+            return View();
+        }
+
+        // pùvodní test DB – necháme ho, a mùeš kontrolovat pøipojení
+        // GET: /Home/TestDb
+        public async Task<IActionResult> TestDb()
+        {
+            var count = await _context.Zavody.CountAsync();
+            return Content($"DB OK! Záznamù v ZAVODY: {count}");
         }
     }
-
 }

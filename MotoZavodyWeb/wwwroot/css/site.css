@@ -1,4 +1,4 @@
-html {
+/*html {
   font-size: 14px;
 }
 
@@ -19,4 +19,288 @@ html {
 
 body {
   margin-bottom: 60px;
+}*/
+
+
+
+/* ============================================
+   ZÁKLADNÍ NASTAVENÍ
+============================================ */
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+    height: 100%;
 }
+
+body {
+    background: #f5f7fa;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    color: #333;
+    margin: 0;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Obsah stránky */
+.container {
+    flex: 1 0 auto;
+    padding-bottom: 3rem;
+}
+
+/* Footer na spodu */
+footer {
+    flex-shrink: 0;
+    background: #1b1f3b;
+    color: #cdd5e0;
+    padding: 1.5rem 0;
+    text-align: center;
+    width: 100%;
+    margin-top: 2rem;
+}
+
+/* ============================================
+   NAVBAR
+============================================ */
+
+.navbar {
+    background: #1b1f3b !important;
+    padding: 0.8rem 1.2rem;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.4rem;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: #dfe6f1 !important;
+    margin-right: 1rem;
+    transition: 0.25s;
+}
+
+    .navbar-dark .navbar-nav .nav-link:hover {
+        color: #ffffff !important;
+        transform: translateY(-2px);
+    }
+
+/* ============================================
+   NADPISY
+============================================ */
+
+h1, h2, h3 {
+    font-weight: 600;
+    color: #1b1f3b;
+    margin-bottom: 1rem;
+}
+
+/* ============================================
+   TLAÈÍTKA
+============================================ */
+
+.btn-primary {
+    background: #0066ff;
+    border: none;
+    padding: 0.6rem 1.1rem;
+    border-radius: 8px;
+    transition: 0.25s;
+}
+
+    .btn-primary:hover {
+        background: #0052cc;
+        transform: translateY(-2px);
+    }
+
+.btn-danger {
+    border-radius: 8px;
+}
+
+/* Dark Mode Button */
+.btn-outline-light {
+    border-radius: 8px;
+}
+
+/* ============================================
+   KARTY
+============================================ */
+
+.card {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+}
+
+.card-header {
+    background: #ffffff;
+    border-bottom: 1px solid #eee;
+    font-weight: 600;
+}
+
+/* ============================================
+   TABULKY
+============================================ */
+
+table {
+    background: #fff !important;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.table thead {
+    background: #1b1f3b;
+    color: white;
+}
+
+.table tbody tr:hover {
+    background: #f0f4ff;
+}
+
+/* ============================================
+   FORMULÁØE
+============================================ */
+
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #ccd3df;
+    padding: 0.6rem;
+    transition: 0.25s;
+}
+
+    .form-control:focus {
+        border-color: #0066ff;
+        box-shadow: 0 0 0 0.15rem rgba(0,102,255,0.25);
+    }
+
+.form-label {
+    font-weight: 600;
+}
+
+/* ============================================
+   LIST-GROUP
+============================================ */
+
+.list-group-item {
+    border: none;
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid #ececec;
+    transition: 0.2s;
+}
+
+    .list-group-item:hover {
+        background: #f0f4ff;
+    }
+
+/* ============================================
+   OBECNÉ ÚPRAVY
+============================================ */
+
+a:hover {
+    text-decoration: none;
+}
+
+img {
+    border-radius: 8px;
+}
+
+/* ============================================
+   DARK MODE
+============================================ */
+
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3 {
+    color: #e6edf3 !important;
+}
+
+body.dark-mode {
+    background: #0d1117;
+    color: #e6edf3;
+}
+
+    /* Navbar */
+    body.dark-mode .navbar {
+        background: #161b22 !important;
+    }
+
+    body.dark-mode .nav-link {
+        color: #cdd9e5 !important;
+    }
+
+        body.dark-mode .nav-link:hover {
+            color: #ffffff !important;
+        }
+
+    /* Cards */
+    body.dark-mode .card {
+        background: #161b22;
+        color: #e6edf3;
+        box-shadow: 0 0 12px rgba(255,255,255,0.05);
+    }
+
+    body.dark-mode .card-header {
+        background: #1c2128;
+        border-bottom: 1px solid #30363d;
+    }
+
+    /* Tables */
+    body.dark-mode table {
+        background: #161b22 !important;
+    }
+
+    body.dark-mode thead {
+        background: #21262d !important;
+        color: #e6edf3 !important;
+    }
+
+    body.dark-mode tbody tr:hover {
+        background: #1c2128 !important;
+    }
+
+    /* Forms */
+    body.dark-mode .form-control {
+        background: #0d1117;
+        border: 1px solid #30363d;
+        color: #e6edf3;
+    }
+
+        body.dark-mode .form-control:focus {
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 0.2rem rgba(88,166,255,0.3);
+        }
+
+    /* Buttons */
+    body.dark-mode .btn-primary {
+        background: #238636;
+    }
+
+        body.dark-mode .btn-primary:hover {
+            background: #2ea043;
+        }
+
+    body.dark-mode .btn-outline-light {
+        border-color: #cdd9e5;
+        color: #cdd9e5;
+    }
+
+    /* List */
+    body.dark-mode .list-group-item {
+        background: #161b22;
+        color: #e6edf3;
+        border-bottom: 1px solid #30363d;
+    }
+
+        body.dark-mode .list-group-item:hover {
+            background: #1c2128;
+        }
+
+    /* Footer */
+    body.dark-mode footer {
+        background: #161b22;
+        color: #8b949e;
+    }
+
+    /* Text v tabulkách v dark módu */
+    body.dark-mode table tbody tr td {
+        color: #e6edf3 !important;
+    }

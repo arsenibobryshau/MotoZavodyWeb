@@ -1,18 +1,22 @@
 using Microsoft.EntityFrameworkCore;
 using MotoZavodyWeb.Data;
-using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // MVC
 builder.Services.AddControllersWithViews();
 
+// DB Context - Oracle
 builder.Services.AddDbContext<ZavodyContext>(options =>
     options.UseOracle(builder.Configuration.GetConnectionString("OracleDb")));
 
-//// DbContext – napojení na connection string z appsettings.json
-//builder.Services.AddDbContext<ZavodyContext>(options =>
-//    options.UseSqlServer(builder.Configuration.GetConnectionString("MotoZavodyConnection")));
+// Session (pro login)
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(2);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 var app = builder.Build();
 
@@ -26,21 +30,24 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+// Routing musí být pøed session
 app.UseRouting();
+
+// Session musí být PØED Authorization
+app.UseSession();
 
 app.UseAuthorization();
 
-// Explicitní redirect z koøene na Home/Index
+// redirect "/"
 app.MapGet("/", context =>
 {
     context.Response.Redirect("/Home/Index");
     return Task.CompletedTask;
 });
 
-// default route pro MVC
+// defaultní routování
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
-

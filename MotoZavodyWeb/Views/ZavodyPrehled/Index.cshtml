@@ -1,0 +1,66 @@
+﻿@model IEnumerable<MotoZavodyWeb.Models.ZavodPrehledItem>
+
+@{
+    ViewData["Title"] = "Přehled závodů";
+}
+
+<h2>Přehled závodů</h2>
+
+<form method="get" class="mb-3">
+
+    <select name="rok">
+        <option value="">Všechny roky</option>
+        @foreach (var y in ViewBag.Roky)
+        {
+            <option value="@y">@y</option>
+        }
+    </select>
+
+    <select name="typ">
+        <option value="">Všechny typy závodu</option>
+        @foreach (var t in ViewBag.Typy)
+        {
+            <option value="@t.IdTypZavodu">@t.Nazev</option>
+        }
+    </select>
+
+    <select name="hodnoceni">
+        <option value="">Všechna hodnocení</option>
+        @foreach (var h in ViewBag.Hodnoceni)
+        {
+            <option value="@h.IdHodnoceni">@h.Metoda</option>
+        }
+    </select>
+
+    <select name="cena">
+        <option value="">Bez řazení</option>
+        <option value="asc">Cena – nejlevnější</option>
+        <option value="desc">Cena – nejdražší</option>
+    </select>
+
+    <button type="submit" class="btn btn-primary">Filtrovat</button>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Název</th>
+            <th>Rok</th>
+            <th>Typ závodu</th>
+            <th>Hodnocení</th>
+            <th>Startovné</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var z in Model)
+        {
+            <tr>
+                <td>@z.Nazev</td>
+                <td>@z.Rok</td>
+                <td>@z.TypZavodu</td>
+                <td>@z.Hodnoceni</td>
+                <td>@z.Startovne Kč</td>
+            </tr>
+        }
+    </tbody>
+</table>

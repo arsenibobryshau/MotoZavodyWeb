@@ -49,9 +49,15 @@ namespace MotoZavodyWeb.Controllers
                 .Select(z => new SelectListItem
                 {
                     Value = z.IdZavod.ToString(),
-                    Text = $"{z.Nazev} ({z.Datum:dd.MM.yyyy})"
+                    Text = $"{z.Nazev} ({z.Datum:dd.MM.yyyy})"                                    
                 })
                 .ToList();
+
+            model.StartovneDict = _context.Zavody
+                .Select(z => new { z.IdZavod, z.Startovne })
+                .ToDictionary(x => x.IdZavod, x => x.Startovne);
+
+
 
             return model;
         }
@@ -70,7 +76,6 @@ namespace MotoZavodyWeb.Controllers
         {
             if (!ModelState.IsValid)
             {
-                // znovu naplnit comboboxy
                 var vm = BuildCreateViewModel();
                 vm.IdZavodnik = model.IdZavodnik;
                 vm.IdZavod = model.IdZavod;
@@ -80,24 +85,47 @@ namespace MotoZavodyWeb.Controllers
                 return View(vm);
             }
 
-            // volání uložené procedury PR_PRIHLAS_ZAVODNIKA_DO_ZAVODU
-            var pIdZavodnik = new OracleParameter("p_id_zavodnik", OracleDbType.Int32, model.IdZavodnik, ParameterDirection.Input);
-            var pIdZavod = new OracleParameter("p_id_zavod", OracleDbType.Int32, model.IdZavod, ParameterDirection.Input);
-            var pCastka = new OracleParameter("p_castka", OracleDbType.Decimal, model.Castka, ParameterDirection.Input);
-            var pTypPlatby = new OracleParameter("p_typ_platby", OracleDbType.Char, model.TypPlatby, ParameterDirection.Input);
+            try
+            {
+                // --- VOLÁNÍ PROCEDURY ---
+                var pIdZavodnik = new OracleParameter("p_id_zavodnik", OracleDbType.Int32, model.IdZavodnik, ParameterDirection.Input);
+                var pIdZavod = new OracleParameter("p_id_zavod", OracleDbType.Int32, model.IdZavod, ParameterDirection.Input);
+                var pCastka = new OracleParameter("p_castka", OracleDbType.Decimal, model.Castka, ParameterDirection.Input);
+                var pTypPlatby = new OracleParameter("p_typ_platby", OracleDbType.Char, model.TypPlatby, ParameterDirection.Input);
 
-            var pCisloKarty = new OracleParameter("p_cislo_karty", OracleDbType.Varchar2);
-            pCisloKarty.Direction = ParameterDirection.Input;
-            pCisloKarty.Value = string.IsNullOrWhiteSpace(model.CisloKarty)
-                ? (object)DBNull.Value
-                : model.CisloKarty;
+                var pCisloKarty = new OracleParameter("p_cislo_karty", OracleDbType.Varchar2)
+                {
+                    Direction = ParameterDirection.Input,
+                    Value = string.IsNullOrWhiteSpace(model.CisloKarty) ? (object)DBNull.Value : model.CisloKarty
+                };
 
-            var sql = "BEGIN PR_PRIHLAS_ZAVODNIKA_DO_ZAVODU(:p_id_zavodnik, :p_id_zavod, :p_castka, :p_typ_platby, :p_cislo_karty); END;";
+                var sql = "BEGIN PR_PRIHLAS_ZAVODNIKA_DO_ZAVODU(:p_id_zavodnik, :p_id_zavod, :p_castka, :p_typ_platby, :p_cislo_karty); END;";
 
-            await _context.Database.ExecuteSqlRawAsync(sql,
-                pIdZavodnik, pIdZavod, pCastka, pTypPlatby, pCisloKarty);
+                await _context.Database.ExecuteSqlRawAsync(sql,
+                    pIdZavodnik, pIdZavod, pCastka, pTypPlatby, pCisloKarty);
 
-            return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index));
+            }
+            catch (OracleException ex)
+            {
+                // === ZACHYCENÍ DUPLICITY ===
+                if (ex.Number == 1)   // ORA-00001
+                {
+                    ModelState.AddModelError("", "⚠ Tento závodník je již na tento závod přihlášen.");
+
+                    var vm = BuildCreateViewModel();
+                    vm.IdZavodnik = model.IdZavodnik;
+                    vm.IdZavod = model.IdZavod;
+                    vm.Castka = model.Castka;
+                    vm.TypPlatby = model.TypPlatby;
+                    vm.CisloKarty = model.CisloKarty;
+
+                    return View(vm);
+                }
+
+                throw; // ostatní chyby necháme propadnout dál
+            }
         }
+
     }
 }

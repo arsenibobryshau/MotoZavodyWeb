@@ -1,0 +1,25 @@
+﻿@{
+    ViewBag.Title = "Přihlášení";
+}
+
+<h2>Přihlášení</h2>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<form method="post">
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input class="form-control" type="email" name="email" required />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Heslo</label>
+        <input class="form-control" type="password" name="heslo" required />
+    </div>
+
+    <button class="btn btn-success">Přihlásit</button>
+</form>
+

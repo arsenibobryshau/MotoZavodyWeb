@@ -5,51 +5,131 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - MotoZavodyWeb</title>
 
-    <!-- BOOTSTRAP CSS -->
+    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 
-    <!-- VLASTNÍ CSS -->
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="~/css/site.css" />
 </head>
-<body class="bg-light">
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
         <div class="container">
-            <a class="navbar-brand" asp-controller="Home" asp-action="Index">MotoZávody</a>
+
+            <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">🏁 MotoZávody</a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
             <div class="collapse navbar-collapse" id="navbarNav">
+
                 <ul class="navbar-nav me-auto">
+
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Home" asp-action="Index">Domů</a>
                     </li>
+
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Zavody" asp-action="Index">Závody</a>
                     </li>
+
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Zavodnici" asp-action="Index">Závodníci</a>
                     </li>
+
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Ucasti" asp-action="Index">Účasti</a>
                     </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Dokumenty" asp-action="Index">Dokumenty</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="ZavodyPrehled" asp-action="Index">
+                            Přehled závodů
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- USER SECTION -->
+                <ul class="navbar-nav ms-auto">
+
+                    @if (Context.Session.GetInt32("UserId") == null)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Uzivatele/Login">Přihlášení</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Uzivatele/Registrace">Registrace</a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <span class="nav-link text-warning">👤 @Context.Session.GetString("UserName")</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Uzivatele/Odhlasit">Odhlásit</a>
+                        </li>
+                    }
+
+                    <!-- DARK MODE TOGGLE -->
+                    <li class="nav-item ms-3">
+                        <button id="darkModeToggle" class="btn btn-outline-light btn-sm">
+                            🌙 Dark Mode
+                        </button>
+                    </li>
+
                 </ul>
             </div>
+
         </div>
     </nav>
 
-    <div class="container">
+    <!-- MAIN CONTENT -->
+    <div class="container mt-4">
         @RenderBody()
     </div>
 
-    <!-- jQuery -->
+    <!-- FOOTER -->
+    <footer class="text-center py-4 mt-auto">
+        <p class="mb-0">© 2025 MotoZávody – Všechna práva vyhrazena.</p>
+    </footer>
+
+    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <!-- Bootstrap JS -->
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Vlastní JS -->
-    <script src="~/js/site.js"></script>
+
+    <!-- DARK MODE SCRIPT -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const toggleBtn = document.getElementById("darkModeToggle");
+            const body = document.body;
+
+            // Load preference
+            if (localStorage.getItem("darkmode") === "true") {
+                body.classList.add("dark-mode");
+                toggleBtn.innerText = "☀️ Light Mode";
+            }
+
+            toggleBtn.addEventListener("click", () => {
+                body.classList.toggle("dark-mode");
+
+                const isDark = body.classList.contains("dark-mode");
+                localStorage.setItem("darkmode", isDark);
+
+                toggleBtn.innerText = isDark
+                    ? "☀️ Light Mode"
+                    : "🌙 Dark Mode";
+            });
+        });
+    </script>
+
+    @RenderSection("Scripts", required: false)
 
 </body>
 </html>

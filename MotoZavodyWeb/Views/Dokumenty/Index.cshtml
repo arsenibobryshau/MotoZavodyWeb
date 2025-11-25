@@ -1,0 +1,41 @@
+﻿@model IEnumerable<MotoZavodyWeb.Models.DokumentZavodnika>
+
+@{
+    ViewData["Title"] = "Dokumenty závodníků";
+}
+
+<h2>Dokumenty závodníků</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Nahrát nový dokument</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Závodník</th>
+            <th>Název souboru</th>
+            <th>Typ souboru</th>
+            <th>Datum nahrání</th>
+            <th>Vytvořil</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var d in Model)
+        {
+            <tr>
+                <td>@(d.Zavodnik != null ? d.Zavodnik.Jmeno + " " + d.Zavodnik.Prijmeni : "")</td>
+                <td>@d.NazevSouboru.@d.PriponaSouboru</td>
+                <td>@d.TypSouboru</td>
+                <td>@(d.DatumNahrani?.ToString("dd.MM.yyyy HH:mm"))</td>
+                <td>@d.UzivatelVytvoril</td>
+                <td>
+                    <a asp-action="Download" asp-route-id="@d.IdDokument" class="btn btn-sm btn-outline-secondary">
+                        Stáhnout
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

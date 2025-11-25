@@ -1,0 +1,41 @@
+﻿@model IEnumerable<MotoZavodyWeb.Models.ZavodHierarchyView>
+
+@{
+    ViewData["Title"] = "Přehled závodů podle roku";
+}
+
+<h2>Přehled závodů podle roku</h2>
+
+@{
+    int? currentYear = null;
+}
+
+<ul class="list-group">
+@foreach (var item in Model)
+{
+    if (item.TypUzlu == "ROK")
+    {
+        if (currentYear != null)
+        {
+            @:</ul>     
+        }
+
+        currentYear = item.Rok;
+
+        <li class="list-group-item active mt-3">
+            <strong>@item.Rok</strong>
+        </li>
+        @:<ul class="list-group ms-4">  
+    }
+    else if (item.TypUzlu == "ZAVOD")
+    {
+        <li class="list-group-item">
+            @item.Nazev
+        </li>
+    }
+}
+@if (currentYear != null)
+{
+    @:</ul>   
+}
+</ul>

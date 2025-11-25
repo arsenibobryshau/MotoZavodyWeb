@@ -10,7 +10,7 @@ namespace MotoZavodyWeb.Data
         {
         }
 
-        // ----- DB TABULKY -----
+        #region DB TABULKY 
         public DbSet<Adresa> Adresy { get; set; } = null!;
         public DbSet<Hodnoceni> Hodnoceni { get; set; } = null!;
         public DbSet<JezdiNa> JezdiNa { get; set; } = null!;
@@ -27,12 +27,17 @@ namespace MotoZavodyWeb.Data
         public DbSet<Zavod> Zavody { get; set; } = null!;
         public DbSet<Zavodnik> Zavodnici { get; set; } = null!;
         public DbSet<UcastDetailView> UcastiDetail { get; set; } = null!;
+        public DbSet<DokumentZavodnika> DokumentyZavodniku { get; set; } = null!;
+        public DbSet<ZavodHierarchyView> ZavodyHierarchie { get; set; } = null!;
+        public DbSet<Uzivatel> Uzivatele { get; set; } = null!;
 
-
-        // ----- VIEW -----
         public DbSet<ZavodDetailView> ZavodyDetail { get; set; } = null!;
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        #endregion
+
+
+        #region VIEW
+                protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
@@ -224,6 +229,76 @@ namespace MotoZavodyWeb.Data
                 entity.Property(e => e.TypPlatby).HasColumnName("TYP_PLATBY");
             });
 
+            modelBuilder.Entity<DokumentZavodnika>(entity =>
+            {
+                entity.ToTable("DOKUMENTY_ZAVODNIKU");
+
+                entity.HasKey(d => d.IdDokument);
+
+                entity.Property(d => d.IdDokument).HasColumnName("ID_DOKUMENT");
+                entity.Property(d => d.IdZavodnik).HasColumnName("ID_ZAVODNIK");
+                entity.Property(d => d.NazevSouboru).HasColumnName("NAZEV_SOUBORU");
+                entity.Property(d => d.TypSouboru).HasColumnName("TYP_SOUBORU");
+                entity.Property(d => d.PriponaSouboru).HasColumnName("PRIPONA_SOUBORU");
+                entity.Property(d => d.Obsah).HasColumnName("OBSAH");
+                entity.Property(d => d.DatumNahrani).HasColumnName("DATUM_NAHRANI");
+                entity.Property(d => d.DatumModifikace).HasColumnName("DATUM_MODIFIKACE");
+                entity.Property(d => d.UzivatelVytvoril).HasColumnName("UZIVATEL_VYTVORIL");
+                entity.Property(d => d.UzivatelZmenil).HasColumnName("UZIVATEL_ZMENIL");
+
+                entity.HasOne(d => d.Zavodnik)
+                      .WithMany()
+                      .HasForeignKey(d => d.IdZavodnik);
+            });
+
+            modelBuilder.Entity<ZavodHierarchyView>(entity =>
+            {
+                entity.HasNoKey();
+                entity.ToView("V_ZAVODY_HIERARCHIE");
+
+                entity.Property(e => e.TypUzlu).HasColumnName("TYP_UZLU");
+                entity.Property(e => e.Nazev).HasColumnName("NAZEV");
+                entity.Property(e => e.Rok).HasColumnName("ROK");
+                entity.Property(e => e.IdZavod).HasColumnName("ID_ZAVOD");
+                entity.Property(e => e.Uroven).HasColumnName("UROVEN");
+            });
+
+            modelBuilder.Entity<Uzivatel>().ToTable("UZIVATELE");
+
+            modelBuilder.Entity<Uzivatel>().HasKey(u => u.IdUzivatel);
+
+            modelBuilder.Entity<Uzivatel>()
+                .Property(u => u.IdUzivatel)
+                .HasColumnName("ID_UZIVATEL");
+
+            modelBuilder.Entity<Uzivatel>()
+                .Property(u => u.Jmeno)
+                .HasColumnName("JMENO");
+
+            modelBuilder.Entity<Uzivatel>()
+                .Property(u => u.Email)
+                .HasColumnName("EMAIL");
+
+            modelBuilder.Entity<Uzivatel>()
+                .Property(u => u.Heslo)
+                .HasColumnName("HESLO");
+
+            modelBuilder.Entity<Uzivatel>()
+                .Property(u => u.Role)
+                .HasColumnName("ROLE");
+
+            modelBuilder.Entity<Uzivatel>()
+                .Property(u => u.DatumVytvoreni)
+                .HasColumnName("DATUM_VYTVORENI");
+
+            modelBuilder.Entity<Uzivatel>()
+                .Property(u => u.DatumPoslednihoPrihlaseni)
+                .HasColumnName("DATUM_POSLEDNIHO_PRIHLASENI");
+
+
+
+
         }
+        #endregion
     }
 }

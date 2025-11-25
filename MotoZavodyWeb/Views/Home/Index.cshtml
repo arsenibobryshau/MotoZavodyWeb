@@ -1,33 +1,60 @@
-﻿@model IEnumerable<MotoZavodyWeb.Models.Zavod>
+﻿@{
+    ViewData["Title"] = "MotoZávody – úvod";
+}
 
-    @{
-    ViewData["Title"] = "Nadcházející závody";
-    }
+<div class="container mt-4">
+    <div class="text-center mb-5">
+        <h1 class="display-4">Vítejte v systému MotoZávody</h1>
+        <p class="lead">
+            Webová aplikace pro správu běžeckých závodů, závodníků a jejich účastí.
+        </p>
 
-    <h2>@ViewData["Title"]</h2>
+        <a asp-controller="Zavody" asp-action="Index" class="btn btn-primary btn-lg mt-3">
+            Vstoupit do aplikace
+        </a>
+    </div>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Název</th>
-                <th>Datum</th>
-                <th>Startovné</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var z in Model)
-            {
-            <tr>
-                <td>@z.Nazev</td>
-                <td>@z.Datum?.ToShortDateString()</td>
-                <td>@z.Startovne</td>
-                <td>
-                    <a asp-controller="Zavody" asp-action="Details" asp-route-id="@z.IdZavod">
-                        Detail
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h4 class="card-title">Závody</h4>
+                    <p class="card-text">
+                        Přehled všech závodů, jejich termínů, míst konání a typů závodů.
+                    </p>
+                    <a asp-controller="Zavody" asp-action="Index" class="btn btn-outline-primary">
+                        Zobrazit závody
                     </a>
-                </td>
-            </tr>
-            }
-        </tbody>
-    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h4 class="card-title">Závodníci</h4>
+                    <p class="card-text">
+                        Evidence závodníků, jejich základních údajů a úrovně zkušenosti.
+                    </p>
+                    <a asp-controller="Zavodnici" asp-action="Index" class="btn btn-outline-primary">
+                        Zobrazit závodníky
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h4 class="card-title">Účasti a platby</h4>
+                    <p class="card-text">
+                        Přihlášení závodníků na závody včetně evidence plateb a typu platby.
+                    </p>
+                    <a asp-controller="Ucasti" asp-action="Index" class="btn btn-outline-primary">
+                        Zobrazit účasti
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,56 @@
+﻿@model MotoZavodyWeb.Models.PrihlaskaCreateViewModel
+
+@{
+    ViewData["Title"] = "Přihlášení na závod";
+}
+
+<h2>Přihlášení závodníka na závod</h2>
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="form-group">
+        <label asp-for="IdZavodnik" class="control-label"></label>
+        <select asp-for="IdZavodnik" class="form-control" asp-items="Model.Zavodnici">
+            <option value="">-- vyberte závodníka --</option>
+        </select>
+        <span asp-validation-for="IdZavodnik" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="IdZavod" class="control-label"></label>
+        <select asp-for="IdZavod" class="form-control" asp-items="Model.Zavody">
+            <option value="">-- vyberte závod --</option>
+        </select>
+        <span asp-validation-for="IdZavod" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Castka" class="control-label"></label>
+        <input asp-for="Castka" class="form-control" />
+        <span asp-validation-for="Castka" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="TypPlatby" class="control-label"></label>
+        <select asp-for="TypPlatby" class="form-control">
+            <option value="H">Hotově</option>
+            <option value="K">Kartou</option>
+        </select>
+        <span asp-validation-for="TypPlatby" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="CisloKarty" class="control-label"></label>
+        <input asp-for="CisloKarty" class="form-control" />
+        <span asp-validation-for="CisloKarty" class="text-danger"></span>
+        <small class="form-text text-muted">
+            Vyplňte pouze při platbě kartou.
+        </small>
+    </div>
+
+    <br />
+
+    <button type="submit" class="btn btn-primary">Přihlásit</button>
+    <a asp-action="Index" class="btn btn-secondary">Zpět na seznam účastí</a>
+</form>

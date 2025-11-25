@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MotoZavodyWeb.Data;
+using MotoZavodyWeb.Models;
+using Oracle.ManagedDataAccess.Client;
+using System.Data;
 
 namespace MotoZavodyWeb.Controllers
 {
@@ -13,30 +16,52 @@ namespace MotoZavodyWeb.Controllers
             _context = context;
         }
 
-        // GET: /Zavodnici/Profile/1
-        public async Task<IActionResult> Profile(int id)
+        // GET: /Zavodnici
+        public async Task<IActionResult> Index()
         {
-            var zavodnik = await _context.Zavodnici
-                .Include(z => z.JezdiNa)
-                    .ThenInclude(j => j.Kolobezka)
-                .FirstOrDefaultAsync(z => z.IdZavodnik == id);
-
-            if (zavodnik == null)
-                return NotFound();
-
-            return View(zavodnik);
-        }
-
-        // GET: /Zavodnici/MyRaces/1
-        public async Task<IActionResult> MyRaces(int id)
-        {
-            var ucasti = await _context.Ucasti
-                .Include(u => u.Zavod)
-                .Where(u => u.IdZavodnik == id)
-                .OrderByDescending(u => u.Zavod.Datum)
+            var zavodnici = await _context.Zavodnici
+                .OrderBy(z => z.Prijmeni)
+                .ThenBy(z => z.Jmeno)
                 .ToListAsync();
 
-            return View(ucasti);
+            return View(zavodnici);
+        }
+
+        // GET: /Zavodnici/Create
+        public IActionResult Create()
+        {
+            var model = new ZavodnikCreateViewModel();
+            return View(model);
+        }
+
+        // POST: /Zavodnici/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(ZavodnikCreateViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // voláme uloženou proceduru PR_REGISTRUJ_ZAVODNIKA
+            var pJmeno = new OracleParameter("p_jmeno", OracleDbType.Varchar2, model.Jmeno, ParameterDirection.Input);
+            var pPrijmeni = new OracleParameter("p_prijmeni", OracleDbType.Varchar2, model.Prijmeni, ParameterDirection.Input);
+            var pVek = new OracleParameter("p_vek", OracleDbType.Int32, model.Vek, ParameterDirection.Input);
+            var pPohlavi = new OracleParameter("p_pohlavi", OracleDbType.Char, model.Pohlavi, ParameterDirection.Input);
+            var pUroven = new OracleParameter("p_uroven_zkusenosti", OracleDbType.Char, model.UrovenZkusenosti, ParameterDirection.Input);
+            var pIdOut = new OracleParameter("p_id_zavodnik_out", OracleDbType.Int32)
+            {
+                Direction = ParameterDirection.Output
+            };
+
+            var sql = "BEGIN PR_REGISTRUJ_ZAVODNIKA(:p_jmeno, :p_prijmeni, :p_vek, :p_pohlavi, :p_uroven_zkusenosti, :p_id_zavodnik_out); END;";
+
+            await _context.Database.ExecuteSqlRawAsync(sql,
+                pJmeno, pPrijmeni, pVek, pPohlavi, pUroven, pIdOut);
+
+            // pIdOut.Value obsahuje nové ID závodníka – mùžeme ho pozdìji použít
+            return RedirectToAction(nameof(Index));
         }
     }
 }

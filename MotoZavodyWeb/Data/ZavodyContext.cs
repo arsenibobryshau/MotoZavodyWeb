@@ -10,6 +10,7 @@ namespace MotoZavodyWeb.Data
         {
         }
 
+        // ----- DB TABULKY -----
         public DbSet<Adresa> Adresy { get; set; } = null!;
         public DbSet<Hodnoceni> Hodnoceni { get; set; } = null!;
         public DbSet<JezdiNa> JezdiNa { get; set; } = null!;
@@ -25,6 +26,11 @@ namespace MotoZavodyWeb.Data
         public DbSet<Zamestnanec> Zamestnanci { get; set; } = null!;
         public DbSet<Zavod> Zavody { get; set; } = null!;
         public DbSet<Zavodnik> Zavodnici { get; set; } = null!;
+        public DbSet<UcastDetailView> UcastiDetail { get; set; } = null!;
+
+
+        // ----- VIEW -----
+        public DbSet<ZavodDetailView> ZavodyDetail { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -47,6 +53,48 @@ namespace MotoZavodyWeb.Data
             modelBuilder.Entity<Zavodnik>().ToTable("ZAVODNICI");
             modelBuilder.Entity<Zavod>().ToTable("ZAVODY");
 
+            // ----- MAPOVÁNÍ SLOUPCŮ ZAVODNIK -----
+            modelBuilder.Entity<Zavodnik>(entity =>
+            {
+                entity.Property(z => z.IdZavodnik)
+                    .HasColumnName("ID_ZAVODNIK");
+
+                entity.Property(z => z.Jmeno)
+                    .HasColumnName("JMENO");
+
+                entity.Property(z => z.Prijmeni)
+                    .HasColumnName("PRIJMENI");
+
+                entity.Property(z => z.Vek)
+                    .HasColumnName("VEK");
+
+                entity.Property(z => z.Pohlavi)
+                    .HasColumnName("POHLAVI");
+
+                entity.Property(z => z.UrovenZkusenosti)
+                    .HasColumnName("UROVEN_ZKUSENOSTI");
+            });
+
+
+            // ----- PK COMPOSITE -----
+            modelBuilder.Entity<Ucast>().HasKey(u => new { u.IdZavodnik, u.IdZavod });
+            modelBuilder.Entity<JezdiNa>().HasKey(j => new { j.IdZavodnik, j.IdKolobezka });
+            modelBuilder.Entity<Organizace>().HasKey(o => new { o.IdZamestnanec, o.IdZavod });
+
+            // ----- PK -----
+            modelBuilder.Entity<Adresa>().HasKey(a => a.IdAdresa);
+            modelBuilder.Entity<Hodnoceni>().HasKey(h => h.IdHodnoceni);
+            modelBuilder.Entity<Kolobezka>().HasKey(k => k.IdKolobezka);
+            modelBuilder.Entity<Misto>().HasKey(m => m.IdMisto);
+            modelBuilder.Entity<Platba>().HasKey(p => p.IdPlatby);
+            modelBuilder.Entity<Posta>().HasKey(p => p.IdPosta);
+            modelBuilder.Entity<Pozice>().HasKey(p => p.IdPozice);
+            modelBuilder.Entity<TypKolobezky>().HasKey(t => t.IdTypKolobezky);
+            modelBuilder.Entity<TypZavodu>().HasKey(t => t.IdTypZavodu);
+            modelBuilder.Entity<Zamestnanec>().HasKey(z => z.IdZamestnanec);
+            modelBuilder.Entity<Zavod>().HasKey(z => z.IdZavod);
+            modelBuilder.Entity<Zavodnik>().HasKey(z => z.IdZavodnik);
+
             // ----- MAPOVÁNÍ SLOUPCŮ -----
             modelBuilder.Entity<TypZavodu>()
                 .Property(t => t.IdTypZavodu)
@@ -64,10 +112,6 @@ namespace MotoZavodyWeb.Data
                 .Property(z => z.IdHodnoceni)
                 .HasColumnName("ID_HODNOCENI");
 
-            modelBuilder.Entity<Zavod>()
-                .Property(z => z.Datum)
-                .HasColumnName("DATUM");
-
             modelBuilder.Entity<Misto>()
                 .Property(m => m.IdMisto)
                 .HasColumnName("ID_MISTO");
@@ -80,9 +124,42 @@ namespace MotoZavodyWeb.Data
                 .Property(m => m.IdAdresa)
                 .HasColumnName("ID_ADRESA");
 
+            modelBuilder.Entity<Zavod>()
+                .Property(z => z.IdTypZavodu).HasColumnName("ID_TYP_ZAVODU");
+            modelBuilder.Entity<Zavod>()
+                .Property(z => z.IdMisto).HasColumnName("ID_MISTO");
+            modelBuilder.Entity<Zavod>()
+                .Property(z => z.IdHodnoceni).HasColumnName("ID_HODNOCENI");
 
-            // ----- FK ----
-            
+
+            // ----- MAPOVÁNÍ SLOUPCŮ ZAVOD -----
+            modelBuilder.Entity<Zavod>(entity =>
+            {
+                entity.Property(z => z.IdZavod)
+                    .HasColumnName("ID_ZAVOD");
+
+                entity.Property(z => z.Nazev)
+                    .HasColumnName("NAZEV");
+
+                entity.Property(z => z.Datum)
+                    .HasColumnName("DATUM");
+
+                entity.Property(z => z.Startovne)
+                    .HasColumnName("STARTOVNE");
+
+                entity.Property(z => z.IdTypZavodu)
+                    .HasColumnName("ID_TYP_ZAVODU");
+
+                entity.Property(z => z.IdMisto)
+                    .HasColumnName("ID_MISTO");
+
+                entity.Property(z => z.IdHodnoceni)
+                    .HasColumnName("ID_HODNOCENI");
+
+            });
+
+
+            // ----- FK -----
             modelBuilder.Entity<Zavod>()
                 .HasOne(z => z.TypZavodu)
                 .WithMany()
@@ -107,23 +184,46 @@ namespace MotoZavodyWeb.Data
                 .HasForeignKey(m => m.IdAdresa)
                 .HasConstraintName("MISTO_ADRESA_FK");
 
-            // ----- PK -----
-            modelBuilder.Entity<Ucast>().HasKey(u => new { u.IdZavodnik, u.IdZavod });
-            modelBuilder.Entity<JezdiNa>().HasKey(j => new { j.IdZavodnik, j.IdKolobezka });
-            modelBuilder.Entity<Organizace>().HasKey(o => new { o.IdZamestnanec, o.IdZavod });
+            // ===========================================
+            //          MAPOVÁNÍ ORACLE VIEW
+            // ===========================================
 
-            modelBuilder.Entity<Adresa>().HasKey(a => a.IdAdresa);
-            modelBuilder.Entity<Hodnoceni>().HasKey(h => h.IdHodnoceni);
-            modelBuilder.Entity<Kolobezka>().HasKey(k => k.IdKolobezka);
-            modelBuilder.Entity<Misto>().HasKey(m => m.IdMisto);
-            modelBuilder.Entity<Platba>().HasKey(p => p.IdPlatby);
-            modelBuilder.Entity<Posta>().HasKey(p => p.IdPosta);
-            modelBuilder.Entity<Pozice>().HasKey(p => p.IdPozice);
-            modelBuilder.Entity<TypKolobezky>().HasKey(t => t.IdTypKolobezky);
-            modelBuilder.Entity<TypZavodu>().HasKey(t => t.IdTypZavodu);
-            modelBuilder.Entity<Zamestnanec>().HasKey(z => z.IdZamestnanec);
-            modelBuilder.Entity<Zavod>().HasKey(z => z.IdZavod);
-            modelBuilder.Entity<Zavodnik>().HasKey(z => z.IdZavodnik);
+            modelBuilder.Entity<ZavodDetailView>(entity =>
+            {
+                entity.HasNoKey();
+                entity.ToView("V_ZAVODY_DETAIL");
+
+                entity.Property(e => e.IdZavod).HasColumnName("ID_ZAVOD");
+                entity.Property(e => e.NazevZavodu).HasColumnName("NAZEV_ZAVODU");
+                entity.Property(e => e.Datum).HasColumnName("DATUM");
+                entity.Property(e => e.Startovne).HasColumnName("STARTOVNE");
+                entity.Property(e => e.TypZavodu).HasColumnName("TYP_ZAVODU");
+                entity.Property(e => e.Misto).HasColumnName("MISTO");
+                entity.Property(e => e.Ulice).HasColumnName("ULICE");
+                entity.Property(e => e.Cp).HasColumnName("CP");
+                entity.Property(e => e.Psc).HasColumnName("PSC");
+                entity.Property(e => e.Mesto).HasColumnName("MESTO");
+                entity.Property(e => e.MetodaHodnoceni).HasColumnName("METODA_HODNOCENI");
+            });
+
+            modelBuilder.Entity<UcastDetailView>(entity =>
+            {
+                entity.HasNoKey();
+                entity.ToView("V_UCASTI_DETAIL");
+
+                entity.Property(e => e.IdZavodnik).HasColumnName("ID_ZAVODNIK");
+                entity.Property(e => e.IdZavod).HasColumnName("ID_ZAVOD");
+
+                entity.Property(e => e.Jmeno).HasColumnName("JMENO");
+                entity.Property(e => e.Prijmeni).HasColumnName("PRIJMENI");
+
+                entity.Property(e => e.NazevZavodu).HasColumnName("NAZEV_ZAVODU");
+                entity.Property(e => e.DatumZavodu).HasColumnName("DATUM_ZAVODU");
+
+                entity.Property(e => e.Castka).HasColumnName("CASTKA");
+                entity.Property(e => e.TypPlatby).HasColumnName("TYP_PLATBY");
+            });
+
         }
     }
 }

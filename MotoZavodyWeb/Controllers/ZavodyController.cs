@@ -17,9 +17,8 @@ namespace MotoZavodyWeb.Controllers
         // GET: /Zavody
         public async Task<IActionResult> Index()
         {
-            var zavody = await _context.Zavody
-                .Include(z => z.TypZavodu)
-                .Include(z => z.Misto)
+            // naète data z Oracle view V_ZAVODY_DETAIL
+            var zavody = await _context.ZavodyDetail
                 .OrderBy(z => z.Datum)
                 .ToListAsync();
 

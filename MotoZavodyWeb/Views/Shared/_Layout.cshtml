@@ -3,19 +3,19 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewBag.Title - MotoZavodyWeb</title>
+    <title>@ViewData["Title"] - MotoZavodyWeb</title>
 
     <!-- BOOTSTRAP CSS -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 
-    <!-- TVŮJ VLASTNÍ CSS -->
+    <!-- VLASTNÍ CSS -->
     <link rel="stylesheet" href="~/css/site.css" />
 </head>
 <body class="bg-light">
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
         <div class="container">
-            <a class="navbar-brand" href="/">MotoZávody</a>
+            <a class="navbar-brand" asp-controller="Home" asp-action="Index">MotoZávody</a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -23,9 +23,18 @@
 
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" href="/">Domů</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/Zavody">Závody</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/Zavodnici">Závodníci</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Home" asp-action="Index">Domů</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Zavody" asp-action="Index">Závody</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Zavodnici" asp-action="Index">Závodníci</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Ucasti" asp-action="Index">Účasti</a>
+                    </li>
                 </ul>
             </div>
         </div>

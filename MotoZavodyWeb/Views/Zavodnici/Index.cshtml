@@ -1,0 +1,35 @@
+﻿@model IEnumerable<MotoZavodyWeb.Models.Zavodnik>
+
+@{
+    ViewData["Title"] = "Závodníci";
+}
+
+<h2>Závodníci</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Registrovat nového závodníka</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Jméno</th>
+            <th>Příjmení</th>
+            <th>Věk</th>
+            <th>Pohlaví</th>
+            <th>Úroveň</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var z in Model)
+        {
+            <tr>
+                <td>@z.Jmeno</td>
+                <td>@z.Prijmeni</td>
+                <td>@z.Vek</td>
+                <td>@z.Pohlavi</td>
+                <td>@z.UrovenZkusenosti</td>
+            </tr>
+        }
+    </tbody>
+</table>

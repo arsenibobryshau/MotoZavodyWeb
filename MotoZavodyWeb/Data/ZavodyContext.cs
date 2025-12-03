@@ -30,10 +30,9 @@ namespace MotoZavodyWeb.Data
         public DbSet<DokumentZavodnika> DokumentyZavodniku { get; set; } = null!;
         public DbSet<Uzivatel> Uzivatele { get; set; } = null!;
 
+
+        // ----- VIEW -----
         public DbSet<ZavodDetailView> ZavodyDetail { get; set; } = null!;
-
-        #endregion
-
 
         #region VIEW
                 protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -240,63 +239,6 @@ namespace MotoZavodyWeb.Data
                 entity.Property(e => e.Castka).HasColumnName("CASTKA");
                 entity.Property(e => e.TypPlatby).HasColumnName("TYP_PLATBY");
             });
-
-            modelBuilder.Entity<DokumentZavodnika>(entity =>
-            {
-                entity.ToTable("DOKUMENTY_ZAVODNIKU");
-
-                entity.HasKey(d => d.IdDokument);
-
-                entity.Property(d => d.IdDokument).HasColumnName("ID_DOKUMENT");
-                entity.Property(d => d.IdZavodnik).HasColumnName("ID_ZAVODNIK");
-                entity.Property(d => d.NazevSouboru).HasColumnName("NAZEV_SOUBORU");
-                entity.Property(d => d.TypSouboru).HasColumnName("TYP_SOUBORU");
-                entity.Property(d => d.PriponaSouboru).HasColumnName("PRIPONA_SOUBORU");
-                entity.Property(d => d.Obsah).HasColumnName("OBSAH");
-                entity.Property(d => d.DatumNahrani).HasColumnName("DATUM_NAHRANI");
-                entity.Property(d => d.DatumModifikace).HasColumnName("DATUM_MODIFIKACE");
-                entity.Property(d => d.UzivatelVytvoril).HasColumnName("UZIVATEL_VYTVORIL");
-                entity.Property(d => d.UzivatelZmenil).HasColumnName("UZIVATEL_ZMENIL");
-
-                entity.HasOne(d => d.Zavodnik)
-                      .WithMany()
-                      .HasForeignKey(d => d.IdZavodnik);
-            });            
-
-            modelBuilder.Entity<Uzivatel>().ToTable("UZIVATELE");
-
-            modelBuilder.Entity<Uzivatel>().HasKey(u => u.IdUzivatel);
-
-            modelBuilder.Entity<Uzivatel>()
-                .Property(u => u.IdUzivatel)
-                .HasColumnName("ID_UZIVATEL");
-
-            modelBuilder.Entity<Uzivatel>()
-                .Property(u => u.Jmeno)
-                .HasColumnName("JMENO");
-
-            modelBuilder.Entity<Uzivatel>()
-                .Property(u => u.Email)
-                .HasColumnName("EMAIL");
-
-            modelBuilder.Entity<Uzivatel>()
-                .Property(u => u.Heslo)
-                .HasColumnName("HESLO");
-
-            modelBuilder.Entity<Uzivatel>()
-                .Property(u => u.Role)
-                .HasColumnName("ROLE");
-
-            modelBuilder.Entity<Uzivatel>()
-                .Property(u => u.DatumVytvoreni)
-                .HasColumnName("DATUM_VYTVORENI");
-
-            modelBuilder.Entity<Uzivatel>()
-                .Property(u => u.DatumPoslednihoPrihlaseni)
-                .HasColumnName("DATUM_POSLEDNIHO_PRIHLASENI");
-
-
-
 
         }
         #endregion

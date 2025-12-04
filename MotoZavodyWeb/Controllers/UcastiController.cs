@@ -74,6 +74,7 @@ namespace MotoZavodyWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(PrihlaskaCreateViewModel model)
         {
+            // Když neprojde validace modelu → vrátíme zpět view s chybou
             if (!ModelState.IsValid)
             {
                 var vm = BuildCreateViewModel();
@@ -82,12 +83,12 @@ namespace MotoZavodyWeb.Controllers
                 vm.Castka = model.Castka;
                 vm.TypPlatby = model.TypPlatby;
                 vm.CisloKarty = model.CisloKarty;
+
                 return View(vm);
             }
 
             try
             {
-                // --- VOLÁNÍ PROCEDURY ---
                 var pIdZavodnik = new OracleParameter("p_id_zavodnik", OracleDbType.Int32, model.IdZavodnik, ParameterDirection.Input);
                 var pIdZavod = new OracleParameter("p_id_zavod", OracleDbType.Int32, model.IdZavod, ParameterDirection.Input);
                 var pCastka = new OracleParameter("p_castka", OracleDbType.Decimal, model.Castka, ParameterDirection.Input);
@@ -108,8 +109,7 @@ namespace MotoZavodyWeb.Controllers
             }
             catch (OracleException ex)
             {
-                // === ZACHYCENÍ DUPLICITY ===
-                if (ex.Number == 1)   // ORA-00001
+                if (ex.Number == 1)
                 {
                     ModelState.AddModelError("", "⚠ Tento závodník je již na tento závod přihlášen.");
 
@@ -123,9 +123,10 @@ namespace MotoZavodyWeb.Controllers
                     return View(vm);
                 }
 
-                throw; // ostatní chyby necháme propadnout dál
+                throw;
             }
         }
+
 
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using MotoZavodyWeb.Models.Validation;
 
 namespace MotoZavodyWeb.Models
 {
@@ -21,17 +22,17 @@ namespace MotoZavodyWeb.Models
 
         [Required]
         [Display(Name = "Typ platby")]
-        public string TypPlatby { get; set; } = "H";  // H = hotově, K = kartou
+        public string TypPlatby { get; set; } = "H";
 
         [Display(Name = "Číslo karty")]
+        [RequiredIfCardPayment]
         [StringLength(16, MinimumLength = 16, ErrorMessage = "Číslo karty musí obsahovat přesně 16 číslic.")]
         [RegularExpression(@"^\d{16}$", ErrorMessage = "Číslo karty může obsahovat pouze číslice.")]
         public string? CisloKarty { get; set; }
 
-        // pro comboboxy
+        // comboboxy
         public IEnumerable<SelectListItem> Zavodnici { get; set; } = new List<SelectListItem>();
         public IEnumerable<SelectListItem> Zavody { get; set; } = new List<SelectListItem>();
         public Dictionary<int, decimal> StartovneDict { get; set; } = new();
-
     }
 }

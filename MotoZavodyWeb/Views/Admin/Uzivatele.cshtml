@@ -1,0 +1,89 @@
+﻿@model IEnumerable<MotoZavodyWeb.Models.Uzivatel>
+
+@removeTagHelper "Microsoft.AspNetCore.Mvc.TagHelpers.OptionTagHelper, Microsoft.AspNetCore.Mvc.TagHelpers"
+
+@{
+    ViewData["Title"] = "Admin – uživatelé";
+}
+
+<h2>Admin – uživatelé</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Jméno</th>
+            <th>E-mail</th>
+            <th>Role</th>
+            <th>Závodník</th>
+            <th>Registrován</th>
+            <th>Poslední přihlášení</th>
+            <th>Akce</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var u in Model)
+        {
+            <tr>
+                <td>@u.IdUzivatel</td>
+                <td>@u.Jmeno</td>
+                <td>@u.Email</td>
+                <td>@u.Role</td>
+                <td>
+                    @if (u.Zavodnik != null)
+                    {
+                        @($"{u.Zavodnik.Jmeno} {u.Zavodnik.Prijmeni}")
+                    }
+                    else
+                    {
+                        @:<i>není přiřazen</i>
+                    }
+                </td>
+                <td>@u.DatumVytvoreni.ToString("dd.MM.yyyy HH:mm")</td>
+                <td>
+                    @if (u.DatumPoslednihoPrihlaseni.HasValue)
+                    {
+                        @u.DatumPoslednihoPrihlaseni.Value.ToString("dd.MM.yyyy HH:mm")
+                    }
+                </td>
+                <td>
+                    <!-- změna role -->
+                    <form asp-action="ZmenRoli" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="idUzivatel" value="@u.IdUzivatel" />
+                        <select name="role" class="form-select form-select-sm d-inline w-auto">
+                            <option value="USER" @(u.Role == "USER" ? "selected" : "")>USER</option>
+                            <option value="ADMIN" @(u.Role == "ADMIN" ? "selected" : "")>ADMIN</option>
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-primary">Uložit</button>
+                    </form>
+
+                    <!-- reset hesla -->
+                    <form asp-action="ResetHesla" method="post" class="d-inline ms-1">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="idUzivatel" value="@u.IdUzivatel" />
+                        <button type="submit" class="btn btn-sm btn-warning">Reset hesla</button>
+                    </form>
+
+                    <!-- smazání uživatele -->
+                    <form asp-action="SmazUzivatele" method="post" class="d-inline ms-1"
+                          onsubmit="return confirm('Opravdu smazat tohoto uživatele?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="idUzivatel" value="@u.IdUzivatel" />
+                        <button type="submit" class="btn btn-sm btn-danger">Smazat</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

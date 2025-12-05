@@ -1,0 +1,160 @@
+﻿@model MotoZavodyWeb.Models.UzivatelProfilViewModel
+
+@{
+    ViewData["Title"] = "Můj profil";
+}
+
+<h2>Můj profil</h2>
+
+@if (ViewBag.Success != null)
+{
+    <div class="alert alert-success">@ViewBag.Success</div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<h3>Údaje o účtu</h3>
+<p><strong>Jméno:</strong> @Model.Uzivatel.Jmeno</p>
+<p><strong>E-mail:</strong> @Model.Uzivatel.Email</p>
+<p><strong>Role:</strong> @Model.Uzivatel.Role</p>
+<p><strong>Registrován:</strong> @Model.Uzivatel.DatumVytvoreni.ToString("dd.MM.yyyy HH:mm")</p>
+
+@if (Model.Zavodnik != null)
+{
+    <h3>Závodnický profil</h3>
+    <p>
+        @Model.Zavodnik.Jmeno @Model.Zavodnik.Prijmeni,
+        věk @Model.Zavodnik.Vek
+    </p>
+}
+else
+{
+    <h3>Závodnický profil</h3>
+    <p>Zatím nemáš vytvořený závodnický profil.</p>
+    <a asp-action="VytvorZavodnika" class="btn btn-primary">Vytvořit závodníka</a>
+}
+
+<h3>Nadcházející závody</h3>
+@if (!Model.NadchazejiciZavody.Any())
+{
+    <p>Nemáš žádné nadcházející závody.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Závod</th>
+                <th>Datum</th>
+                <th>Částka</th>
+                <th>Typ platby</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var z in Model.NadchazejiciZavody)
+            {
+                <tr>
+                    <td>@z.NazevZavodu</td>
+                    <td>@z.DatumZavodu.ToString("dd.MM.yyyy")</td>
+                    <td>@z.Castka</td>
+                    <td>@z.TypPlatby</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<h3>Proběhlé závody</h3>
+@if (!Model.MinuleZavody.Any())
+{
+    <p>Zatím žádné proběhlé závody.</p>
+}
+else
+{
+    <p>
+        Startů celkem: @Model.PocetStartu,
+        celková částka: @(Model.CelkovaCastka ?? 0)
+    </p>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Závod</th>
+                <th>Datum</th>
+                <th>Částka</th>
+                <th>Typ platby</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var z in Model.MinuleZavody)
+            {
+                <tr>
+                    <td>@z.NazevZavodu</td>
+                    <td>@z.DatumZavodu.ToString("dd.MM.yyyy")</td>
+                    <td>@z.Castka</td>
+                    <td>@z.TypPlatby</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<h3>Moje koloběžky</h3>
+@if (!Model.Kolobezky.Any())
+{
+    <p>Nemáš přiřazené žádné koloběžky.</p>
+}
+else
+{
+    <ul>
+        @foreach (var k in Model.Kolobezky)
+        {
+            <li>@k.Znacka @k.Model</li>
+        }
+    </ul>
+}
+
+<h3>Dostupné závody k přihlášení</h3>
+@if (Model.Zavodnik == null)
+{
+    <p>Nejprve si vytvoř závodnický profil.</p>
+}
+else if (!Model.DostupneZavody.Any())
+{
+    <p>Aktuálně není žádný závod, na který by ses mohl přihlásit.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Závod</th>
+                <th>Datum</th>
+                <th>Místo</th>
+                <th>Startovné</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var z in Model.DostupneZavody)
+            {
+                <tr>
+                    <td>@z.NazevZavodu</td>
+                    <td>@z.Datum.ToString("dd.MM.yyyy")</td>
+                    <td>@z.Misto</td>
+                    <td>@z.Startovne</td>
+                    <td>
+                        <form asp-action="PrihlasitNaZavod" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="idZavod" value="@z.IdZavod" />
+                            <button type="submit" class="btn btn-success btn-sm">Přihlásit se</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

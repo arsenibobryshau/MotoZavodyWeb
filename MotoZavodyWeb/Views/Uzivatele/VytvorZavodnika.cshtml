@@ -1,0 +1,51 @@
+﻿@{
+    ViewData["Title"] = "Vytvořit závodnický profil";
+}
+
+<h2>Vytvořit závodnický profil</h2>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<form asp-action="VytvorZavodnika" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="mb-3">
+        <label class="form-label">Jméno</label>
+        <input type="text" name="jmeno" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Příjmení</label>
+        <input type="text" name="prijmeni" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Věk</label>
+        <input type="number" name="vek" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Pohlaví</label>
+        <select name="pohlavi" class="form-select">
+            <option value="">-- vyber --</option>
+            <option value="M">Muž</option>
+            <option value="Z">Žena</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Úroveň zkušenosti</label>
+        <select name="urovenZkusenosti" class="form-select">
+            <option value="">-- vyber --</option>
+            <option value="A">Začátečník</option>
+            <option value="B">Pokročilý</option>
+            <option value="C">Profesionál</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Uložit</button>
+    <a asp-action="Profil" class="btn btn-secondary">Zpět na profil</a>
+</form>

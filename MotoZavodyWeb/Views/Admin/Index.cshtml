@@ -1,0 +1,15 @@
+﻿@{
+    ViewData["Title"] = "Admin – přehled";
+}
+
+<h2>Admin – přehled</h2>
+
+<div class="mb-3">
+    <p><strong>Počet uživatelů:</strong> @ViewBag.PocetUzivatelu</p>
+    <p><strong>Počet ADMIN:</strong> @ViewBag.PocetAdminu</p>
+    <p><strong>Počet USER:</strong> @ViewBag.PocetUseru</p>
+</div>
+
+<p>
+    <a asp-action="Uzivatele" class="btn btn-primary">Správa uživatelů</a>
+</p>

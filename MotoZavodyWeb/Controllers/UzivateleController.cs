@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MotoZavodyWeb.Data;
 using MotoZavodyWeb.Models;
@@ -8,7 +8,7 @@ using System.Text;
 
 namespace MotoZavodyWeb.Controllers
 {
-    public class UzivateleController : Controller
+    public class UzivateleController : BaseController
     {
         private readonly ZavodyContext _context;
 
@@ -17,25 +17,25 @@ namespace MotoZavodyWeb.Controllers
             _context = context;
         }
 
-        // Pomocná metoda pro hash hesla (SHA256)
+        // ===========================================
+        //              Pomocná metoda
+        // ===========================================
         private string HashPassword(string password)
         {
             using var sha = SHA256.Create();
             var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToHexString(bytes); // např. "A1B2C3..."
+            return Convert.ToHexString(bytes);
         }
 
-        // ================================
-        //  GET: Registrace
-        // ================================
+        // ===========================================
+        //                  REGISTRACE
+        // ===========================================
+        [HttpGet]
         public IActionResult Registrace()
         {
             return View();
         }
 
-        // ================================
-        //  POST: Registrace (EF Core)
-        // ================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Registrace(string jmeno, string email, string heslo)
@@ -48,9 +48,10 @@ namespace MotoZavodyWeb.Controllers
                 return View();
             }
 
-            // kontrola duplicity emailu
-            var existuje = _context.Uzivatele.Any(u => u.Email == email); //kvůli tomuto mi hází ERROR :D 
-            if (existuje)
+            var existujici = _context.Uzivatele
+                .FirstOrDefault(u => u.Email == email);
+
+            if (existujici != null)
             {
                 ViewBag.Error = "Uživatel s tímto e-mailem už existuje.";
                 return View();
@@ -63,7 +64,7 @@ namespace MotoZavodyWeb.Controllers
                 Jmeno = jmeno,
                 Email = email,
                 Heslo = hashed,
-                Role = "USER",                
+                Role = "USER",
                 DatumVytvoreni = DateTime.Now
             };
 
@@ -74,21 +75,20 @@ namespace MotoZavodyWeb.Controllers
             return RedirectToAction("Login");
         }
 
-        // ================================
-        //  GET: Login
-        // ================================
+        // ===========================================
+        //                     LOGIN
+        // ===========================================
+        [HttpGet]
         public IActionResult Login()
         {
             if (TempData["Success"] != null)
             {
                 ViewBag.Success = TempData["Success"];
             }
+
             return View();
         }
 
-        // ================================
-        //  POST: Login
-        // ================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Login(string email, string heslo)
@@ -110,25 +110,225 @@ namespace MotoZavodyWeb.Controllers
                 return View();
             }
 
-            // uložení do session
             HttpContext.Session.SetInt32("UserId", uzivatel.IdUzivatel);
             HttpContext.Session.SetString("UserRole", uzivatel.Role);
             HttpContext.Session.SetString("UserName", uzivatel.Jmeno);
 
-            // update posledniho přihlášení (není nutné, ale je pěkné)
             uzivatel.DatumPoslednihoPrihlaseni = DateTime.Now;
             _context.SaveChanges();
 
             return RedirectToAction("Index", "Home");
         }
 
-        // ================================
-        //  Odhlášení
-        // ================================
+        // ===========================================
+        //                  ODHLÁŠENÍ
+        // ===========================================
         public IActionResult Odhlasit()
         {
             HttpContext.Session.Clear();
             return RedirectToAction("Index", "Home");
+        }
+
+        // ===========================================
+        //                  PROFIL
+        // ===========================================
+        [HttpGet]
+        public IActionResult Profil()
+        {
+            var check = RequireLogin();
+            if (check != null) return check;
+
+            var userId = CurrentUserId!.Value;
+
+            var uzivatel = _context.Uzivatele
+                .Include(u => u.Zavodnik)
+                .FirstOrDefault(u => u.IdUzivatel == userId);
+
+            if (uzivatel == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            int? idZavodnik = uzivatel.IdZavodnik;
+            var dnes = DateTime.Today;
+
+            List<UcastDetailView> nadchazejici = new();
+            List<UcastDetailView> minule = new();
+            List<Kolobezka> kolobezky = new();
+            decimal? celkovaCastka = null;
+            int pocetStartu = 0;
+            List<ZavodDetailView> dostupneZavody = new();
+
+            if (idZavodnik.HasValue)
+            {
+                var ucasti = _context.UcastiDetail
+                    .Where(u => u.IdZavodnik == idZavodnik.Value)
+                    .ToList();
+
+                nadchazejici = ucasti
+                    .Where(u => u.DatumZavodu >= dnes)
+                    .OrderBy(u => u.DatumZavodu)
+                    .ToList();
+
+                minule = ucasti
+                    .Where(u => u.DatumZavodu < dnes)
+                    .OrderByDescending(u => u.DatumZavodu)
+                    .ToList();
+
+                celkovaCastka = ucasti.Sum(u => u.Castka);
+                pocetStartu = ucasti.Count;
+
+                // ===== OPRAVENÝ DOTAZ NA KOLOBĚŽKY =====
+                // Vytváříme novou instanci Kolobezka z existujících sloupců,
+                // takže EF nepřidá do SQL žádný neexistující sloupec.
+                kolobezky = _context.JezdiNa
+                    .Where(j => j.IdZavodnik == idZavodnik.Value)
+                    .Join(
+                        _context.Kolobezky,
+                        j => j.IdKolobezka,
+                        k => k.IdKolobezka,
+                        (j, k) => new Kolobezka
+                        {
+                            IdKolobezka = k.IdKolobezka,
+                            Model = k.Model,
+                            Znacka = k.Znacka,
+                            IdTypKolobezky = k.IdTypKolobezky
+                        }
+                    )
+                    .ToList();
+
+                var uzPrihlasenIds = ucasti
+                    .Select(u => u.IdZavod)
+                    .Distinct()
+                    .ToList();
+
+                dostupneZavody = _context.ZavodyDetail
+                    .Where(z => z.Datum >= dnes &&
+                                !uzPrihlasenIds.Contains(z.IdZavod))
+                    .OrderBy(z => z.Datum)
+                    .ToList();
+            }
+
+            var vm = new UzivatelProfilViewModel
+            {
+                Uzivatel = uzivatel,
+                Zavodnik = uzivatel.Zavodnik,
+                NadchazejiciZavody = nadchazejici,
+                MinuleZavody = minule,
+                Kolobezky = kolobezky,
+                CelkovaCastka = celkovaCastka,
+                PocetStartu = pocetStartu,
+                DostupneZavody = dostupneZavody
+            };
+
+            if (TempData["Success"] != null)
+            {
+                ViewBag.Success = TempData["Success"];
+            }
+
+            return View(vm);
+        }
+
+        // ===========================================
+        //       VYTVOŘENÍ ZÁVODNÍKA K ÚČTU
+        // ===========================================
+        [HttpGet]
+        public IActionResult VytvorZavodnika()
+        {
+            var check = RequireLogin();
+            if (check != null) return check;
+
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult VytvorZavodnika(string jmeno, string prijmeni, int vek, string pohlavi, string urovenZkusenosti)
+        {
+            var check = RequireLogin();
+            if (check != null) return check;
+
+            if (string.IsNullOrWhiteSpace(jmeno) ||
+                string.IsNullOrWhiteSpace(prijmeni) ||
+                string.IsNullOrWhiteSpace(pohlavi) ||
+                string.IsNullOrWhiteSpace(urovenZkusenosti))
+            {
+                ViewBag.Error = "Vyplň všechna povinná pole.";
+                return View();
+            }
+
+            var userId = CurrentUserId!.Value;
+            var uzivatel = _context.Uzivatele.FirstOrDefault(u => u.IdUzivatel == userId);
+
+            if (uzivatel == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            if (uzivatel.IdZavodnik.HasValue)
+            {
+                return RedirectToAction("Profil");
+            }
+
+            var zavodnik = new Zavodnik
+            {
+                Jmeno = jmeno,
+                Prijmeni = prijmeni,
+                Vek = vek,
+                Pohlavi = pohlavi,
+                UrovenZkusenosti = urovenZkusenosti
+            };
+
+            _context.Zavodnici.Add(zavodnik);
+            _context.SaveChanges();
+
+            uzivatel.IdZavodnik = zavodnik.IdZavodnik;
+            _context.SaveChanges();
+
+            TempData["Success"] = "Závodnický profil byl vytvořen.";
+            return RedirectToAction("Profil");
+        }
+
+        // ===========================================
+        //          PŘIHLÁŠENÍ NA ZÁVOD
+        // ===========================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult PrihlasitNaZavod(int idZavod)
+        {
+            var check = RequireLogin();
+            if (check != null) return check;
+
+            var userId = CurrentUserId!.Value;
+            var uzivatel = _context.Uzivatele.FirstOrDefault(u => u.IdUzivatel == userId);
+
+            if (uzivatel == null || !uzivatel.IdZavodnik.HasValue)
+            {
+                TempData["Success"] = null;
+                TempData["Error"] = "K účtu není přiřazen závodník.";
+                return RedirectToAction("Profil");
+            }
+
+            int idZavodnik = uzivatel.IdZavodnik.Value;
+
+            bool uzPrihlasen = _context.Ucasti
+                .Any(u => u.IdZavod == idZavod && u.IdZavodnik == idZavodnik);
+
+            if (!uzPrihlasen)
+            {
+                var ucast = new Ucast
+                {
+                    IdZavod = idZavod,
+                    IdZavodnik = idZavodnik
+                };
+
+                _context.Ucasti.Add(ucast);
+                _context.SaveChanges();
+
+                TempData["Success"] = "Byl jsi úspěšně přihlášen na závod.";
+            }
+
+            return RedirectToAction("Profil");
         }
     }
 }

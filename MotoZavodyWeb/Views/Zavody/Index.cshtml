@@ -1,20 +1,25 @@
-@model IEnumerable<MotoZavodyWeb.Models.ZavodDetailView>
-
+Ôªø@model IEnumerable<MotoZavodyWeb.Models.ZavodDetailView>
 @{
-    ViewData["Title"] = "Z·vody";
+    ViewData["Title"] = "Z√°vody";
+    var role = Context.Session.GetString("UserRole");
 }
 
-<h2>Z·vody</h2>
+<h2>Z√°vody</h2>
+
+@if (role == "ADMIN")
+{
+    <a asp-action="Create" class="btn btn-success mb-3">P≈ôidat z√°vod</a>
+}
 
 <table class="table">
     <thead>
         <tr>
-            <th>N·zev z·vodu</th>
+            <th>N√°zev z√°vodu</th>
             <th>Datum</th>
-            <th>MÌsto</th>
-            <th>StartovnÈ</th>
-            <th>Typ z·vodu</th>
-            <th>HodnocenÌ</th>
+            <th>M√≠sto</th>
+            <th>Startovn√©</th>
+            <th>Typ z√°vodu</th>
+            <th>Hodnocen√≠</th>
         </tr>
     </thead>
     <tbody>

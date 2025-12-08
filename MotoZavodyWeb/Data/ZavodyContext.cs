@@ -9,7 +9,10 @@ namespace MotoZavodyWeb.Data
             : base(options)
         {
         }
-
+        #region DB SET
+        // ===========================================
+        //                 DB SETY
+        // ===========================================
         public DbSet<Adresa> Adresy { get; set; } = null!;
         public DbSet<Hodnoceni> Hodnoceni { get; set; } = null!;
         public DbSet<JezdiNa> JezdiNa { get; set; } = null!;
@@ -29,12 +32,15 @@ namespace MotoZavodyWeb.Data
         public DbSet<DokumentZavodnika> DokumentyZavodniku { get; set; } = null!;
         public DbSet<Uzivatel> Uzivatele { get; set; } = null!;
         public DbSet<ZavodDetailView> ZavodyDetail { get; set; } = null!;
+        #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // ----- MAPOVÁNÍ TABULEK -----
+            // ===========================================
+            //               MAPOVÁNÍ TABULEK
+            // ===========================================
             modelBuilder.Entity<Adresa>().ToTable("ADRESY");
             modelBuilder.Entity<Hodnoceni>().ToTable("HODNOCENI");
             modelBuilder.Entity<JezdiNa>().ToTable("JEZDI_NA");
@@ -51,6 +57,33 @@ namespace MotoZavodyWeb.Data
             modelBuilder.Entity<Zavodnik>().ToTable("ZAVODNICI");
             modelBuilder.Entity<Zavod>().ToTable("ZAVODY");
 
+            // ===========================================
+            //               MAPOVÁNÍ PK
+            // ===========================================
+            modelBuilder.Entity<Adresa>().HasKey(a => a.IdAdresa);
+            modelBuilder.Entity<Hodnoceni>().HasKey(h => h.IdHodnoceni);
+            modelBuilder.Entity<Kolobezka>().HasKey(k => k.IdKolobezka);
+            modelBuilder.Entity<Misto>().HasKey(m => m.IdMisto);
+            modelBuilder.Entity<Platba>().HasKey(p => p.IdPlatby);
+            modelBuilder.Entity<Posta>().HasKey(p => p.IdPosta);
+            modelBuilder.Entity<Pozice>().HasKey(p => p.IdPozice);
+            modelBuilder.Entity<TypKolobezky>().HasKey(t => t.IdTypKolobezky);
+            modelBuilder.Entity<TypZavodu>().HasKey(t => t.IdTypZavodu);
+            modelBuilder.Entity<Zamestnanec>().HasKey(z => z.IdZamestnanec);
+            modelBuilder.Entity<Zavod>().HasKey(z => z.IdZavod);
+            modelBuilder.Entity<Zavodnik>().HasKey(z => z.IdZavodnik);
+
+            // ===========================================
+            //         MAPOVÁNÍ COMPOSITE PK
+            // ===========================================
+            modelBuilder.Entity<Ucast>().HasKey(u => new { u.IdZavodnik, u.IdZavod });
+            modelBuilder.Entity<JezdiNa>().HasKey(j => new { j.IdZavodnik, j.IdKolobezka });
+            modelBuilder.Entity<Organizace>().HasKey(o => new { o.IdZamestnanec, o.IdZavod });
+
+            // ===========================================
+            //               MAPOVÁNÍ SLOUPCŮ
+            // ===========================================
+
             // ----- ZAVODNIK -----
             modelBuilder.Entity<Zavodnik>(entity =>
             {
@@ -65,62 +98,50 @@ namespace MotoZavodyWeb.Data
             // ----- KOLOBEZKA -----
             modelBuilder.Entity<Kolobezka>(entity =>
             {
+                entity.ToTable("KOLOBEZKY");
+
+                entity.HasKey(k => k.IdKolobezka);
+
                 entity.Property(k => k.IdKolobezka).HasColumnName("ID_KOLOBEZKA");
                 entity.Property(k => k.Model).HasColumnName("MODEL");
                 entity.Property(k => k.Znacka).HasColumnName("ZNACKA");
                 entity.Property(k => k.IdTypKolobezky).HasColumnName("ID_TYP_KOLOBEZKY");
+
+                entity.HasOne(k => k.TypKolobezky)
+                      .WithMany(t => t.Kolobezky)
+                      .HasForeignKey(k => k.IdTypKolobezky)
+                      .HasConstraintName("FK_KOLOBEZKY_TYP");
             });
+
 
             // ----- JEZDI_NA -----
             modelBuilder.Entity<JezdiNa>(entity =>
             {
-                entity.Property(j => j.IdZavodnik).HasColumnName("ZAVODNIK_ID_ZAVODNIK");
-                entity.Property(j => j.IdKolobezka).HasColumnName("KOLOBEZKA_ID_KOLOBEZKA");
+                entity.ToTable("JEZDI_NA");
+
+                entity.HasKey(j => new { j.IdZavodnik, j.IdKolobezka });
+
+                entity.Property(j => j.IdZavodnik)
+                    .HasColumnName("ZAVODNIK_ID_ZAVODNIK");
+
+                entity.Property(j => j.IdKolobezka)
+                    .HasColumnName("KOLOBEZKA_ID_KOLOBEZKA");
+
+                entity.HasOne(j => j.Zavodnik)
+                    .WithMany(z => z.JezdiNa)
+                    .HasForeignKey(j => j.IdZavodnik);
+
+                entity.HasOne(j => j.Kolobezka)
+                    .WithMany(k => k.JezdiNa)
+                    .HasForeignKey(j => j.IdKolobezka);
             });
 
-            // ----- PK COMPOSITE -----
-            modelBuilder.Entity<Ucast>().HasKey(u => new { u.IdZavodnik, u.IdZavod });
-            modelBuilder.Entity<JezdiNa>().HasKey(j => new { j.IdZavodnik, j.IdKolobezka });
-            modelBuilder.Entity<Organizace>().HasKey(o => new { o.IdZamestnanec, o.IdZavod });
 
-            // ----- PK -----
-            modelBuilder.Entity<Adresa>().HasKey(a => a.IdAdresa);
-            modelBuilder.Entity<Hodnoceni>().HasKey(h => h.IdHodnoceni);
-            modelBuilder.Entity<Kolobezka>().HasKey(k => k.IdKolobezka);
-            modelBuilder.Entity<Misto>().HasKey(m => m.IdMisto);
-            modelBuilder.Entity<Platba>().HasKey(p => p.IdPlatby);
-            modelBuilder.Entity<Posta>().HasKey(p => p.IdPosta);
-            modelBuilder.Entity<Pozice>().HasKey(p => p.IdPozice);
-            modelBuilder.Entity<TypKolobezky>().HasKey(t => t.IdTypKolobezky);
-            modelBuilder.Entity<TypZavodu>().HasKey(t => t.IdTypZavodu);
-            modelBuilder.Entity<Zamestnanec>().HasKey(z => z.IdZamestnanec);
-            modelBuilder.Entity<Zavod>().HasKey(z => z.IdZavod);
-            modelBuilder.Entity<Zavodnik>().HasKey(z => z.IdZavodnik);
-
-            // ----- MAPOVÁNÍ SLOUPCŮ -----
+            // ----- TYP ZAVODU -----
             modelBuilder.Entity<TypZavodu>()
                 .Property(t => t.IdTypZavodu).HasColumnName("ID_TYP_ZAVODU");
             modelBuilder.Entity<TypZavodu>()
                 .Property(t => t.Nazev).HasColumnName("NAZEV");
-
-            modelBuilder.Entity<Zavod>()
-                .Property(z => z.IdTypZavodu).HasColumnName("ID_TYP_ZAVODU");
-            modelBuilder.Entity<Zavod>()
-                .Property(z => z.IdMisto).HasColumnName("ID_MISTO");
-            modelBuilder.Entity<Zavod>()
-                .Property(z => z.IdHodnoceni).HasColumnName("ID_HODNOCENI");
-
-            modelBuilder.Entity<Misto>()
-                .Property(m => m.IdMisto).HasColumnName("ID_MISTO");
-            modelBuilder.Entity<Misto>()
-                .Property(m => m.Nazev).HasColumnName("NAZEV");
-            modelBuilder.Entity<Misto>()
-                .Property(m => m.IdAdresa).HasColumnName("ID_ADRESA");
-
-            modelBuilder.Entity<Hodnoceni>()
-                .Property(h => h.IdHodnoceni).HasColumnName("ID_HODNOCENI");
-            modelBuilder.Entity<Hodnoceni>()
-                .Property(h => h.Metoda).HasColumnName("METODA");
 
             // ----- ZAVOD -----
             modelBuilder.Entity<Zavod>(entity =>
@@ -132,35 +153,61 @@ namespace MotoZavodyWeb.Data
                 entity.Property(z => z.IdTypZavodu).HasColumnName("ID_TYP_ZAVODU");
                 entity.Property(z => z.IdMisto).HasColumnName("ID_MISTO");
                 entity.Property(z => z.IdHodnoceni).HasColumnName("ID_HODNOCENI");
+
+                entity.HasOne(z => z.TypZavodu)
+                    .WithMany(t => t.Zavody)
+                    .HasForeignKey(z => z.IdTypZavodu)
+                    .HasConstraintName("FK_ZAVODY_TYP_ZAVODU");
+
+                entity.HasOne(z => z.Misto)
+                    .WithMany(m => m.Zavody)
+                    .HasForeignKey(z => z.IdMisto)
+                    .HasConstraintName("FK_ZAVODY_MISTO");
+
+                entity.HasOne(z => z.Hodnoceni)
+                    .WithMany(h => h.Zavody)
+                    .HasForeignKey(z => z.IdHodnoceni)
+                    .HasConstraintName("FK_ZAVODY_HODNOCENI");
             });
 
-            // ----- FK -----
-            modelBuilder.Entity<Zavod>()
-                .HasOne(z => z.TypZavodu)
-                .WithMany()
-                .HasForeignKey(z => z.IdTypZavodu)
-                .HasConstraintName("FK_ZAVODY_TYP_ZAVODU");
 
-            modelBuilder.Entity<Zavod>()
-                .HasOne(z => z.Misto)
-                .WithMany(m => m.Zavody)
-                .HasForeignKey(z => z.IdMisto)
-                .HasConstraintName("FK_ZAVODY_MISTO");
+            // ----- HODNOCENI -----
+            modelBuilder.Entity<Hodnoceni>()
+                .Property(h => h.IdHodnoceni).HasColumnName("ID_HODNOCENI");
+            modelBuilder.Entity<Hodnoceni>()
+                .Property(h => h.Metoda).HasColumnName("METODA");
 
-            modelBuilder.Entity<Zavod>()
-                .HasOne(z => z.Hodnoceni)
-                .WithMany()
-                .HasForeignKey(z => z.IdHodnoceni)
-                .HasConstraintName("FK_ZAVODY_HODNOCENI");
+            // ===========================================
+            //               MAPOVÁNÍ FK
+            // ===========================================
+
+            //modelBuilder.Entity<Zavod>()
+            //    .HasOne(z => z.TypZavodu)
+            //    .WithMany()
+            //    .HasForeignKey(z => z.IdTypZavodu)
+            //    .HasConstraintName("FK_ZAVODY_TYP_ZAVODU");
+
+            //modelBuilder.Entity<Zavod>()
+            //    .HasOne(z => z.Misto)
+            //    .WithMany(m => m.Zavody)
+            //    .HasForeignKey(z => z.IdMisto)
+            //    .HasConstraintName("FK_ZAVODY_MISTO");
+
+            //modelBuilder.Entity<Zavod>()
+            //    .HasOne(z => z.Hodnoceni)
+            //    .WithMany()
+            //    .HasForeignKey(z => z.IdHodnoceni)
+            //    .HasConstraintName("FK_ZAVODY_HODNOCENI");
 
             modelBuilder.Entity<Misto>()
                 .HasOne(m => m.Adresa)
                 .WithMany()
                 .HasForeignKey(m => m.IdAdresa)
-                .HasConstraintName("MISTO_ADRESA_FK");
+                .HasConstraintName("MISTO_ADRESA_FK")
+                .OnDelete(DeleteBehavior.Restrict);
 
             // ===========================================
-            //          VIEW V_ZAVODY_DETAIL
+            //          VIEW: V_ZAVODY_DETAIL
             // ===========================================
             modelBuilder.Entity<ZavodDetailView>(entity =>
             {
@@ -181,7 +228,7 @@ namespace MotoZavodyWeb.Data
             });
 
             // ===========================================
-            //          VIEW V_UCASTI_DETAIL
+            //          VIEW: V_UCASTI_DETAIL
             // ===========================================
             modelBuilder.Entity<UcastDetailView>(entity =>
             {
@@ -213,6 +260,7 @@ namespace MotoZavodyWeb.Data
                 entity.Property(d => d.TypSouboru).HasColumnName("TYP_SOUBORU");
                 entity.Property(d => d.PriponaSouboru).HasColumnName("PRIPONA_SOUBORU");
                 entity.Property(d => d.Obsah).HasColumnName("OBSAH");
+                entity.Property(d => d.ViditelneVsem).HasColumnName("VIDITELNE_VSEM");
                 entity.Property(d => d.DatumNahrani).HasColumnName("DATUM_NAHRANI");
                 entity.Property(d => d.DatumModifikace).HasColumnName("DATUM_MODIFIKACE");
                 entity.Property(d => d.UzivatelVytvoril).HasColumnName("UZIVATEL_VYTVORIL");
@@ -252,6 +300,34 @@ namespace MotoZavodyWeb.Data
                 .WithMany()
                 .HasForeignKey(u => u.IdZavodnik)
                 .HasConstraintName("UZIVATEL_ZAVODNIK_FK");
+
+            modelBuilder.Entity<Uzivatel>()
+                .Property(u => u.ProfilFoto)
+                .HasColumnType("BLOB");
+
+            // ===========================================
+            //              MISTO
+            // ===========================================
+            modelBuilder.Entity<Misto>(entity =>
+            {
+                entity.ToTable("MISTA");
+
+                entity.HasKey(m => m.IdMisto);
+
+                entity.Property(m => m.IdMisto).HasColumnName("ID_MISTO");
+                entity.Property(m => m.Nazev).HasColumnName("NAZEV");
+                entity.Property(m => m.IdAdresa).HasColumnName("ID_ADRESA");
+
+                entity.HasOne(m => m.Adresa)
+                      .WithMany()
+                      .HasForeignKey(m => m.IdAdresa)
+                      .HasConstraintName("MISTO_ADRESA_FK")
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Navigation(m => m.Adresa).AutoInclude(false);
+            });
+
         }
+
     }
 }

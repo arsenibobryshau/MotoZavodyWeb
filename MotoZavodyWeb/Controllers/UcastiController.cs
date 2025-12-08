@@ -29,14 +29,15 @@ namespace MotoZavodyWeb.Controllers
             return View(ucasti);
         }
 
-        // pomocná metoda pro naplnění comboboxů
+        // ==========================
+        // SHARED BUILDER
+        // ==========================
         private PrihlaskaCreateViewModel BuildCreateViewModel()
         {
             var model = new PrihlaskaCreateViewModel();
 
             model.Zavodnici = _context.Zavodnici
                 .OrderBy(z => z.Prijmeni)
-                .ThenBy(z => z.Jmeno)
                 .Select(z => new SelectListItem
                 {
                     Value = z.IdZavodnik.ToString(),
@@ -49,7 +50,7 @@ namespace MotoZavodyWeb.Controllers
                 .Select(z => new SelectListItem
                 {
                     Value = z.IdZavod.ToString(),
-                    Text = $"{z.Nazev} ({z.Datum:dd.MM.yyyy})"                                    
+                    Text = $"{z.Nazev} ({z.Datum:dd.MM.yyyy})"
                 })
                 .ToList();
 
@@ -58,23 +59,22 @@ namespace MotoZavodyWeb.Controllers
                 .ToDictionary(x => x.IdZavod, x => x.Startovne);
 
 
-
             return model;
         }
 
-        // GET: /Ucasti/Create
+        // =====================================
+        // ADMIN — PRIHLAŠOVÁNÍ LIBOVOLNÉHO ZÁVODNÍKA
+        // =====================================
+
         public IActionResult Create()
         {
-            var model = BuildCreateViewModel();
-            return View(model);
+            return View(BuildCreateViewModel());
         }
 
-        // POST: /Ucasti/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(PrihlaskaCreateViewModel model)
         {
-            // Když neprojde validace modelu → vrátíme zpět view s chybou
             if (!ModelState.IsValid)
             {
                 var vm = BuildCreateViewModel();
@@ -83,10 +83,68 @@ namespace MotoZavodyWeb.Controllers
                 vm.Castka = model.Castka;
                 vm.TypPlatby = model.TypPlatby;
                 vm.CisloKarty = model.CisloKarty;
-
                 return View(vm);
             }
 
+            return await ProvedPrihlaseni(model);
+        }
+
+        // =====================================
+        // UŽIVATEL — PŘIHLÁŠENÍ SÁM SEBE
+        // =====================================
+        public IActionResult PrihlasitSe()
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId == null)
+                return RedirectToAction("Login", "Uzivatele");
+
+            var user = _context.Uzivatele
+                .Include(u => u.Zavodnik)
+                .FirstOrDefault(u => u.IdUzivatel == userId);
+
+            if (user == null)
+                return RedirectToAction("Login", "Uzivatele");
+
+            if (user.Zavodnik == null)
+            {
+                TempData["Error"] = "Musíte si nejprve vytvořit závodnický profil.";
+                return RedirectToAction("Profil", "Uzivatele");
+            }
+
+            var vm = BuildCreateViewModel();
+            vm.IdZavodnik = user.Zavodnik.IdZavodnik;
+            vm.JmenoZavodnika = $"{user.Zavodnik.Jmeno} {user.Zavodnik.Prijmeni}";
+
+            return View("Create", vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PrihlasitSe(PrihlaskaCreateViewModel model)
+        {
+            // ID závodníka nemusí být spolehlivé z POSTu → načteme ho vždy podle session
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null)
+                return RedirectToAction("Login", "Uzivatele");
+
+            var user = _context.Uzivatele
+                .Include(u => u.Zavodnik)
+                .FirstOrDefault(u => u.IdUzivatel == userId);
+
+            if (user?.Zavodnik == null)
+                return RedirectToAction("Profil", "Uzivatele");
+
+            model.IdZavodnik = user.Zavodnik.IdZavodnik;
+
+            return await ProvedPrihlaseni(model);
+        }
+
+        // =====================================
+        // SPOLEČNÉ PROVEDENÍ ZÁPISU DO DB
+        // =====================================
+        private async Task<IActionResult> ProvedPrihlaseni(PrihlaskaCreateViewModel model)
+        {
             try
             {
                 var pIdZavodnik = new OracleParameter("p_id_zavodnik", OracleDbType.Int32, model.IdZavodnik, ParameterDirection.Input);
@@ -97,10 +155,12 @@ namespace MotoZavodyWeb.Controllers
                 var pCisloKarty = new OracleParameter("p_cislo_karty", OracleDbType.Varchar2)
                 {
                     Direction = ParameterDirection.Input,
-                    Value = string.IsNullOrWhiteSpace(model.CisloKarty) ? (object)DBNull.Value : model.CisloKarty
+                    Value = string.IsNullOrWhiteSpace(model.CisloKarty)
+                            ? (object)DBNull.Value
+                            : model.CisloKarty
                 };
 
-                var sql = "BEGIN PR_PRIHLAS_ZAVODNIKA_DO_ZAVODU(:p_id_zavodnik, :p_id_zavod, :p_castka, :p_typ_platby, :p_cislo_karty); END;";
+                string sql = "BEGIN PR_PRIHLAS_ZAVODNIKA_DO_ZAVODU(:p_id_zavodnik, :p_id_zavod, :p_castka, :p_typ_platby, :p_cislo_karty); END;";
 
                 await _context.Database.ExecuteSqlRawAsync(sql,
                     pIdZavodnik, pIdZavod, pCastka, pTypPlatby, pCisloKarty);
@@ -109,24 +169,23 @@ namespace MotoZavodyWeb.Controllers
             }
             catch (OracleException ex)
             {
+                // závodník je již přihlášen
                 if (ex.Number == 1)
                 {
-                    ModelState.AddModelError("", "⚠ Tento závodník je již na tento závod přihlášen.");
+                    ModelState.AddModelError("", "⚠ Na tento závod jste již přihlášeni.");
 
                     var vm = BuildCreateViewModel();
-                    vm.IdZavodnik = model.IdZavodnik;
                     vm.IdZavod = model.IdZavod;
                     vm.Castka = model.Castka;
                     vm.TypPlatby = model.TypPlatby;
                     vm.CisloKarty = model.CisloKarty;
 
-                    return View(vm);
+                    return View("Create", vm);
+
                 }
 
                 throw;
             }
         }
-
-
     }
 }

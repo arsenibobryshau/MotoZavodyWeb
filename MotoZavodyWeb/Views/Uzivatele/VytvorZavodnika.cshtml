@@ -1,5 +1,6 @@
 ﻿@{
     ViewData["Title"] = "Vytvořit závodnický profil";
+    var role = ViewBag.Role as string;
 }
 
 <h2>Vytvořit závodnický profil</h2>
@@ -12,21 +13,33 @@
 <form asp-action="VytvorZavodnika" method="post">
     @Html.AntiForgeryToken()
 
+    <!-- Jméno -->
     <div class="mb-3">
         <label class="form-label">Jméno</label>
-        <input type="text" name="jmeno" class="form-control" />
+        <input type="text"
+               name="jmeno"
+               class="form-control"
+               value="@ViewBag.Jmeno"
+               @(role == "USER" ? "readonly" : "") />
     </div>
 
+    <!-- Příjmení -->
     <div class="mb-3">
         <label class="form-label">Příjmení</label>
-        <input type="text" name="prijmeni" class="form-control" />
+        <input type="text"
+               name="prijmeni"
+               class="form-control"
+               value="@ViewBag.Prijmeni"
+               @(role == "USER" ? "readonly" : "") />
     </div>
 
+    <!-- Věk -->
     <div class="mb-3">
         <label class="form-label">Věk</label>
         <input type="number" name="vek" class="form-control" />
     </div>
 
+    <!-- Pohlaví -->
     <div class="mb-3">
         <label class="form-label">Pohlaví</label>
         <select name="pohlavi" class="form-select">
@@ -36,13 +49,15 @@
         </select>
     </div>
 
+    <!-- Úroveň -->
     <div class="mb-3">
         <label class="form-label">Úroveň zkušenosti</label>
         <select name="urovenZkusenosti" class="form-select">
             <option value="">-- vyber --</option>
-            <option value="A">Začátečník</option>
+            <option value="D">Začátečník</option>
+            <option value="C">Mírně pokročilý</option>
             <option value="B">Pokročilý</option>
-            <option value="C">Profesionál</option>
+            <option value="A">Profesionál</option>
         </select>
     </div>
 

@@ -1,13 +1,21 @@
 ﻿@model IEnumerable<MotoZavodyWeb.Models.Zavodnik>
 
 @{
-    ViewData["Title"] = "Závodníci";
+    var role = ViewBag.Role as string;
+    bool maProfil = ViewBag.MaProfil ?? false;
 }
 
 <h2>Závodníci</h2>
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Registrovat nového závodníka</a>
+@if (role == "ADMIN")
+{
+    <a asp-action="Create" class="btn btn-primary mb-3">Registrovat nového závodníka</a>
+}
+else if (role == "USER" && !maProfil)
+{
+    <a asp-action="Create" class="btn btn-success mb-3">Vytvořit můj závodnický profil</a>
+}
+
 </p>
 
 <table class="table">

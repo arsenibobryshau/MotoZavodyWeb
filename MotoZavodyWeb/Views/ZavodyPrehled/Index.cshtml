@@ -4,62 +4,111 @@
     ViewData["Title"] = "Přehled závodů";
 }
 
-<h2>Přehled závodů</h2>
+<h2 class="mb-4">Přehled závodů</h2>
 
-<form method="get" class="mb-3">
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get">
+            <div class="row g-3 align-items-end">
 
-    <select name="rok">
-        <option value="">Všechny roky</option>
-        @foreach (var y in ViewBag.Roky)
-        {
-            <option value="@y">@y</option>
-        }
-    </select>
+                <div class="col-md-3">
+                    <label class="form-label">Rok</label>
+                    <select name="rok" class="form-select">
+                        <option value="">Všechny roky</option>
+                        @foreach (var y in ViewBag.Roky)
+                        {
+                            <option value="@y" selected="@(Context.Request.Query["rok"] == y.ToString())">
+                                @y
+                            </option>
+                        }
+                    </select>
 
-    <select name="typ">
-        <option value="">Všechny typy závodu</option>
-        @foreach (var t in ViewBag.Typy)
-        {
-            <option value="@t.IdTypZavodu">@t.Nazev</option>
-        }
-    </select>
+                </div>
 
-    <select name="hodnoceni">
-        <option value="">Všechna hodnocení</option>
-        @foreach (var h in ViewBag.Hodnoceni)
-        {
-            <option value="@h.IdHodnoceni">@h.Metoda</option>
-        }
-    </select>
+                <div class="col-md-3">
+                    <label class="form-label">Typ závodu</label>
+                    <select name="typ" class="form-select">
+                        <option value="">Všechny typy závodu</option>
+                        @foreach (var t in ViewBag.Typy)
+                        {
+                            <option value="@t.IdTypZavodu"
+                                    selected="@(Context.Request.Query["typ"] == t.IdTypZavodu.ToString())">
+                                @t.Nazev
+                            </option>
+                        }
+                    </select>
+                </div>
 
-    <select name="cena">
-        <option value="">Bez řazení</option>
-        <option value="asc">Cena – nejlevnější</option>
-        <option value="desc">Cena – nejdražší</option>
-    </select>
+                <div class="col-md-3">
+                    <label class="form-label">Hodnocení</label>
+                    <select name="hodnoceni" class="form-select">
+                        <option value="">Všechna hodnocení</option>
+                        @foreach (var h in ViewBag.Hodnoceni)
+                        {
+                            <option value="@h.IdHodnoceni"
+                                    selected="@(Context.Request.Query["hodnoceni"] == h.IdHodnoceni.ToString())">
+                                @h.Metoda
+                            </option>
+                        }
+                    </select>
+                </div>
 
-    <button type="submit" class="btn btn-primary">Filtrovat</button>
-</form>
+                <div class="col-md-3">
+                    <label class="form-label">Řazení ceny</label>
+                    <select name="cena" class="form-select">
+                        <option value="">Bez řazení</option>
+                        <option value="asc" selected="@(Context.Request.Query["cena"] == "asc")">
+                            Cena – nejlevnější
+                        </option>
+                        <option value="desc" selected="@(Context.Request.Query["cena"] == "desc")">
+                            Cena – nejdražší
+                        </option>
+                    </select>
+                </div>
 
-<table class="table">
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-success px-4 mt-2">
+                        Filtrovat
+                    </button>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+
+<table class="table table-hover align-middle">
     <thead>
         <tr>
             <th>Název</th>
             <th>Rok</th>
             <th>Typ závodu</th>
             <th>Hodnocení</th>
-            <th>Startovné</th>
+            <th class="text-end">Startovné</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var z in Model)
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var z in Model)
+            {
+                <tr>
+                    <td>@z.Nazev</td>
+                    <td>@z.Rok</td>
+                    <td>@z.TypZavodu</td>
+                    <td>@z.Hodnoceni</td>
+                    <td class="text-end">
+                        @z.Startovne Kč
+                    </td>
+                </tr>
+            }
+        }
+        else
         {
             <tr>
-                <td>@z.Nazev</td>
-                <td>@z.Rok</td>
-                <td>@z.TypZavodu</td>
-                <td>@z.Hodnoceni</td>
-                <td>@z.Startovne Kč</td>
+                <td colspan="5" class="text-center text-muted">
+                    Nebyly nalezeny žádné závody pro zvolený filtr.
+                </td>
             </tr>
         }
     </tbody>

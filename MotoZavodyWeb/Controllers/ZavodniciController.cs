@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
+Ôªøusing Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MotoZavodyWeb.Data;
 using MotoZavodyWeb.Models;
 using Oracle.ManagedDataAccess.Client;
+using Oracle.ManagedDataAccess.Types;
 using System.Data;
 
 namespace MotoZavodyWeb.Controllers
@@ -16,9 +17,28 @@ namespace MotoZavodyWeb.Controllers
             _context = context;
         }
 
-        // GET: /Zavodnici
+        // =====================================================
+        // SEZNAM Z√ÅVODN√çK≈Æ
+        // =====================================================
         public async Task<IActionResult> Index()
         {
+            var role = HttpContext.Session.GetString("UserRole");
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            bool maProfil = false;
+
+            if (role == "USER" && userId != null)
+            {
+                var user = await _context.Uzivatele
+                    .FirstOrDefaultAsync(u => u.IdUzivatel == userId);
+
+                if (user != null)
+                    maProfil = user.IdZavodnik != null;
+            }
+
+            ViewBag.MaProfil = maProfil;
+            ViewBag.Role = role;
+
             var zavodnici = await _context.Zavodnici
                 .OrderBy(z => z.Prijmeni)
                 .ThenBy(z => z.Jmeno)
@@ -27,40 +47,86 @@ namespace MotoZavodyWeb.Controllers
             return View(zavodnici);
         }
 
-        // GET: /Zavodnici/Create
+
+        // =====================================================
+        // CREATE GET
+        // =====================================================
         public IActionResult Create()
         {
+            var role = HttpContext.Session.GetString("UserRole");
+            var userId = HttpContext.Session.GetInt32("UserId");
+
+            if (userId == null)
+                return RedirectToAction("Login", "Uzivatele");
+
             var model = new ZavodnikCreateViewModel();
+
+            if (role == "USER")
+            {
+                var uzivatel = _context.Uzivatele.First(u => u.IdUzivatel == userId);
+
+                if (uzivatel.IdZavodnik != null)
+                {
+                    TempData["Error"] = "Ji≈æ m√°te vytvo≈ôen√Ω z√°vodnick√Ω profil.";
+                    return RedirectToAction("Index");
+                }
+
+                model.Jmeno = uzivatel.Jmeno;
+                model.Prijmeni = uzivatel.Prijmeni;
+            }
+
             return View(model);
         }
 
-        // POST: /Zavodnici/Create
+        // =====================================================
+        // CREATE POST
+        // =====================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ZavodnikCreateViewModel model)
         {
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
+            var role = HttpContext.Session.GetString("UserRole");
+            var userId = HttpContext.Session.GetInt32("UserId");
 
-            // vol·me uloûenou proceduru PR_REGISTRUJ_ZAVODNIKA
-            var pJmeno = new OracleParameter("p_jmeno", OracleDbType.Varchar2, model.Jmeno, ParameterDirection.Input);
-            var pPrijmeni = new OracleParameter("p_prijmeni", OracleDbType.Varchar2, model.Prijmeni, ParameterDirection.Input);
-            var pVek = new OracleParameter("p_vek", OracleDbType.Int32, model.Vek, ParameterDirection.Input);
-            var pPohlavi = new OracleParameter("p_pohlavi", OracleDbType.Char, model.Pohlavi, ParameterDirection.Input);
-            var pUroven = new OracleParameter("p_uroven_zkusenosti", OracleDbType.Char, model.UrovenZkusenosti, ParameterDirection.Input);
+            if (userId == null)
+                return RedirectToAction("Login", "Uzivatele");
+
+            if (!ModelState.IsValid)
+                return View(model);
+
             var pIdOut = new OracleParameter("p_id_zavodnik_out", OracleDbType.Int32)
             {
                 Direction = ParameterDirection.Output
             };
 
-            var sql = "BEGIN PR_REGISTRUJ_ZAVODNIKA(:p_jmeno, :p_prijmeni, :p_vek, :p_pohlavi, :p_uroven_zkusenosti, :p_id_zavodnik_out); END;";
+            string sql = @"BEGIN PR_REGISTRUJ_ZAVODNIKA(
+                                :p_jmeno,
+                                :p_prijmeni,
+                                :p_vek,
+                                :p_pohlavi,
+                                :p_uroven,
+                                :p_id_zavodnik_out
+                           ); END;";
 
             await _context.Database.ExecuteSqlRawAsync(sql,
-                pJmeno, pPrijmeni, pVek, pPohlavi, pUroven, pIdOut);
+                new OracleParameter("p_jmeno", model.Jmeno),
+                new OracleParameter("p_prijmeni", model.Prijmeni),
+                new OracleParameter("p_vek", model.Vek),
+                new OracleParameter("p_pohlavi", model.Pohlavi),
+                new OracleParameter("p_uroven", model.UrovenZkusenosti),
+                pIdOut
+            );
 
-            // pIdOut.Value obsahuje novÈ ID z·vodnÌka ñ m˘ûeme ho pozdÏji pouûÌt
+            var oracleDecimal = (OracleDecimal)pIdOut.Value;
+            int newId = oracleDecimal.ToInt32();
+
+            if (role == "USER")
+            {
+                var uzivatel = _context.Uzivatele.Find(userId);
+                uzivatel!.IdZavodnik = newId;
+                await _context.SaveChangesAsync();
+            }
+
             return RedirectToAction(nameof(Index));
         }
     }

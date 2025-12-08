@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+Ôªøusing Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MotoZavodyWeb.Data;
 using MotoZavodyWeb.Models;
@@ -17,7 +17,7 @@ namespace MotoZavodyWeb.Controllers
         // GET: /Zavody
         public async Task<IActionResult> Index()
         {
-            // naËte data z Oracle view V_ZAVODY_DETAIL
+            // naƒçte data z Oracle view V_ZAVODY_DETAIL
             var zavody = await _context.ZavodyDetail
                 .OrderBy(z => z.Datum)
                 .ToListAsync();
@@ -43,7 +43,7 @@ namespace MotoZavodyWeb.Controllers
         // GET: /Zavody/Register/5
         public IActionResult Register(int id)
         {
-            // id = IdZavod, v re·lu bys tu naËetl z·vod + aktu·lnÏ p¯ihl·öenÈho z·vodnÌka
+            // id = IdZavod, v re√°lu bys tu naƒçetl z√°vod + aktu√°lnƒõ p≈ôihl√°≈°en√©ho z√°vodn√≠ka
             var model = new Ucast { IdZavod = id };
             return View(model);
         }
@@ -61,5 +61,50 @@ namespace MotoZavodyWeb.Controllers
 
             return RedirectToAction("Details", new { id = model.IdZavod });
         }
+
+        // GET: /Zavody/Create
+        public IActionResult Create()
+        {
+            if (HttpContext.Session.GetString("UserRole") != "ADMIN")
+                return Unauthorized();
+
+            ViewBag.Typy = _context.TypyZavodu
+                .Select(t => new { t.IdTypZavodu, t.Nazev })
+                .ToList();
+
+            ViewBag.Mista = _context.Mista
+                .Select(m => new { m.IdMisto, m.Nazev })
+                .ToList();
+
+            ViewBag.Hodnoceni = _context.Hodnoceni
+                .Select(h => new { h.IdHodnoceni, h.Metoda })
+                .ToList();
+
+            return View();
+        }
+
+
+        // POST: /Zavody/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Zavod model)
+        {
+            if (!ModelState.IsValid)
+            {
+                // ‚Üê MUS√ç≈† DOPLNIT, aby selecty nebyly NULL
+                ViewBag.Typy = _context.TypyZavodu.ToList();
+                ViewBag.Mista = _context.Mista.ToList();
+                ViewBag.Hodnoceni = _context.Hodnoceni.ToList();
+
+                return View(model);
+            }
+
+            _context.Zavody.Add(model);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+
+
     }
 }

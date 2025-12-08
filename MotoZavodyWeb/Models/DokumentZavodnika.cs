@@ -19,5 +19,7 @@ namespace MotoZavodyWeb.Models
         public string? UzivatelZmenil { get; set; }
 
         public Zavodnik? Zavodnik { get; set; }
+
+        public bool ViditelneVsem { get; set; }
     }
 }

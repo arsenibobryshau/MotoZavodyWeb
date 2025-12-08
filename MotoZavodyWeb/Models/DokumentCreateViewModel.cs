@@ -15,6 +15,8 @@ namespace MotoZavodyWeb.Models
         [Display(Name = "Soubor")]
         public IFormFile Soubor { get; set; } = default!;
 
+        public bool ViditelneVsem { get; set; }   
+
         public IEnumerable<SelectListItem> Zavodnici { get; set; } = new List<SelectListItem>();
     }
 }

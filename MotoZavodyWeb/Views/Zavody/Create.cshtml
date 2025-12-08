@@ -1,0 +1,50 @@
+﻿@model MotoZavodyWeb.Models.Zavod
+
+<h2>Přidat závod</h2>
+
+<div class="card p-4 shadow-sm">
+
+    <form asp-action="Create" method="post">
+
+        <div class="mb-3">
+            <label class="form-label">Název závodu</label>
+            <input asp-for="Nazev" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Datum</label>
+            <input asp-for="Datum" type="date" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Startovné</label>
+            <input asp-for="Startovne" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Typ závodu</label>
+            <select asp-for="IdTypZavodu" class="form-control"
+                    asp-items="@(new SelectList(ViewBag.Typy, "IdTypZavodu", "Nazev"))">
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Místo</label>
+            <select asp-for="IdMisto" class="form-control"
+                    asp-items="@(new SelectList(ViewBag.Mista, "IdMisto", "Nazev"))">
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Hodnocení</label>
+            <select asp-for="IdHodnoceni" class="form-control"
+                    asp-items="@(new SelectList(ViewBag.Hodnoceni, "IdHodnoceni", "Metoda"))">
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Uložit závod</button>
+        <a asp-action="Index" class="btn btn-secondary">Zpět</a>
+
+    </form>
+
+</div>

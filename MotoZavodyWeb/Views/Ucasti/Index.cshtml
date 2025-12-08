@@ -7,7 +7,14 @@
 <h2>Účasti závodníků</h2>
 
 <p>
-    <a asp-action="Create" class="btn btn-primary">Přihlásit závodníka na závod</a>
+    @if (Context.Session.GetString("UserRole") == "ADMIN")
+    {
+        <a asp-action="Create" class="btn btn-primary">Přihlásit závodníka na závod</a>
+    }
+    else
+    {
+        <a asp-action="PrihlasitSe" class="btn btn-success">Přihlásit se na závod</a>
+    }
 </p>
 
 <table class="table">

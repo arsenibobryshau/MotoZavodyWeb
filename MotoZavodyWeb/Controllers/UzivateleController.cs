@@ -17,9 +17,9 @@ namespace MotoZavodyWeb.Controllers
             _context = context;
         }
 
-        // ===========================================
-        //              Pomocná metoda
-        // ===========================================
+        // =====================================================
+        // HASH hesla
+        // =====================================================
         private string HashPassword(string password)
         {
             using var sha = SHA256.Create();
@@ -27,9 +27,9 @@ namespace MotoZavodyWeb.Controllers
             return Convert.ToHexString(bytes);
         }
 
-        // ===========================================
-        //                  REGISTRACE
-        // ===========================================
+        // =====================================================
+        // REGISTRACE
+        // =====================================================
         [HttpGet]
         public IActionResult Registrace()
         {
@@ -38,9 +38,10 @@ namespace MotoZavodyWeb.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Registrace(string jmeno, string email, string heslo)
+        public IActionResult Registrace(string jmeno, string prijmeni, string email, string heslo)
         {
             if (string.IsNullOrWhiteSpace(jmeno) ||
+                string.IsNullOrWhiteSpace(prijmeni) ||
                 string.IsNullOrWhiteSpace(email) ||
                 string.IsNullOrWhiteSpace(heslo))
             {
@@ -48,22 +49,18 @@ namespace MotoZavodyWeb.Controllers
                 return View();
             }
 
-            var existujici = _context.Uzivatele
-                .FirstOrDefault(u => u.Email == email);
-
-            if (existujici != null)
+            if (_context.Uzivatele.Any(u => u.Email == email))
             {
-                ViewBag.Error = "Uživatel s tímto e-mailem už existuje.";
+                ViewBag.Error = "Uživatel s tímto e-mailem již existuje.";
                 return View();
             }
-
-            var hashed = HashPassword(heslo);
 
             var uzivatel = new Uzivatel
             {
                 Jmeno = jmeno,
+                Prijmeni = prijmeni,
                 Email = email,
-                Heslo = hashed,
+                Heslo = HashPassword(heslo),
                 Role = "USER",
                 DatumVytvoreni = DateTime.Now
             };
@@ -71,20 +68,18 @@ namespace MotoZavodyWeb.Controllers
             _context.Uzivatele.Add(uzivatel);
             _context.SaveChanges();
 
-            TempData["Success"] = "Registrace proběhla úspěšně. Nyní se můžete přihlásit.";
+            TempData["Success"] = "Registrace proběhla úspěšně.";
             return RedirectToAction("Login");
         }
 
-        // ===========================================
-        //                     LOGIN
-        // ===========================================
+        // =====================================================
+        // LOGIN
+        // =====================================================
         [HttpGet]
         public IActionResult Login()
         {
             if (TempData["Success"] != null)
-            {
                 ViewBag.Success = TempData["Success"];
-            }
 
             return View();
         }
@@ -112,7 +107,8 @@ namespace MotoZavodyWeb.Controllers
 
             HttpContext.Session.SetInt32("UserId", uzivatel.IdUzivatel);
             HttpContext.Session.SetString("UserRole", uzivatel.Role);
-            HttpContext.Session.SetString("UserName", uzivatel.Jmeno);
+            HttpContext.Session.SetString("UserFullName", uzivatel.Jmeno + " " + uzivatel.Prijmeni);
+
 
             uzivatel.DatumPoslednihoPrihlaseni = DateTime.Now;
             _context.SaveChanges();
@@ -120,123 +116,198 @@ namespace MotoZavodyWeb.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        // ===========================================
-        //                  ODHLÁŠENÍ
-        // ===========================================
+        // =====================================================
+        // ODHLAŠENÍ
+        // =====================================================
         public IActionResult Odhlasit()
         {
             HttpContext.Session.Clear();
             return RedirectToAction("Index", "Home");
         }
 
-        // ===========================================
-        //                  PROFIL
-        // ===========================================
+        // =====================================================
+        // PROFIL
+        // =====================================================
         [HttpGet]
         public IActionResult Profil()
         {
             var check = RequireLogin();
             if (check != null) return check;
 
-            var userId = CurrentUserId!.Value;
-
             var uzivatel = _context.Uzivatele
                 .Include(u => u.Zavodnik)
-                .FirstOrDefault(u => u.IdUzivatel == userId);
+                .First(u => u.IdUzivatel == CurrentUserId);
 
-            if (uzivatel == null)
+            // ---------------------------
+            // KOLOBĚŽKY
+            // ---------------------------
+            var kolobezky = new List<Kolobezka>();
+            int zavodnikId = uzivatel.Zavodnik?.IdZavodnik ?? 0;
+
+            if (uzivatel.Zavodnik != null)
             {
-                return RedirectToAction("Login");
-            }
-
-            int? idZavodnik = uzivatel.IdZavodnik;
-            var dnes = DateTime.Today;
-
-            List<UcastDetailView> nadchazejici = new();
-            List<UcastDetailView> minule = new();
-            List<Kolobezka> kolobezky = new();
-            decimal? celkovaCastka = null;
-            int pocetStartu = 0;
-            List<ZavodDetailView> dostupneZavody = new();
-
-            if (idZavodnik.HasValue)
-            {
-                var ucasti = _context.UcastiDetail
-                    .Where(u => u.IdZavodnik == idZavodnik.Value)
-                    .ToList();
-
-                nadchazejici = ucasti
-                    .Where(u => u.DatumZavodu >= dnes)
-                    .OrderBy(u => u.DatumZavodu)
-                    .ToList();
-
-                minule = ucasti
-                    .Where(u => u.DatumZavodu < dnes)
-                    .OrderByDescending(u => u.DatumZavodu)
-                    .ToList();
-
-                celkovaCastka = ucasti.Sum(u => u.Castka);
-                pocetStartu = ucasti.Count;
-
-                // ===== OPRAVENÝ DOTAZ NA KOLOBĚŽKY =====
-                // Vytváříme novou instanci Kolobezka z existujících sloupců,
-                // takže EF nepřidá do SQL žádný neexistující sloupec.
                 kolobezky = _context.JezdiNa
-                    .Where(j => j.IdZavodnik == idZavodnik.Value)
-                    .Join(
-                        _context.Kolobezky,
-                        j => j.IdKolobezka,
-                        k => k.IdKolobezka,
-                        (j, k) => new Kolobezka
-                        {
-                            IdKolobezka = k.IdKolobezka,
-                            Model = k.Model,
-                            Znacka = k.Znacka,
-                            IdTypKolobezky = k.IdTypKolobezky
-                        }
-                    )
-                    .ToList();
-
-                var uzPrihlasenIds = ucasti
-                    .Select(u => u.IdZavod)
-                    .Distinct()
-                    .ToList();
-
-                dostupneZavody = _context.ZavodyDetail
-                    .Where(z => z.Datum >= dnes &&
-                                !uzPrihlasenIds.Contains(z.IdZavod))
-                    .OrderBy(z => z.Datum)
+                    .Include(j => j.Kolobezka)
+                    .Where(j => j.IdZavodnik == zavodnikId)
+                    .Select(j => j.Kolobezka!)
                     .ToList();
             }
-
+            // ---------------------------
+            // VIEWMODEL
+            //----------------------------
             var vm = new UzivatelProfilViewModel
             {
                 Uzivatel = uzivatel,
                 Zavodnik = uzivatel.Zavodnik,
-                NadchazejiciZavody = nadchazejici,
-                MinuleZavody = minule,
                 Kolobezky = kolobezky,
-                CelkovaCastka = celkovaCastka,
-                PocetStartu = pocetStartu,
-                DostupneZavody = dostupneZavody
-            };
 
-            if (TempData["Success"] != null)
-            {
-                ViewBag.Success = TempData["Success"];
-            }
+                NadchazejiciZavody = new(),
+                MinuleZavody = new(),
+                PocetStartu = 0,
+                CelkovaCastka = 0,
+                DostupneZavody = new(),
+            };
 
             return View(vm);
         }
 
-        // ===========================================
-        //       VYTVOŘENÍ ZÁVODNÍKA K ÚČTU
-        // ===========================================
+
+          //    // ---------------------------
+          //    // ZÁVODY UŽIVATELE
+          //    // ---------------------------
+          //    var nadchazejici = new List<ZavodUzivateleView>();
+          //    var minule = new List<ZavodUzivateleView>();
+          //    int pocetStartu = 0;
+          //    decimal celkovaCastka = 0;
+          //    if (uzivatel.Zavodnik != null)
+          //    {
+          //        int zavodnikId = uzivatel.Zavodnik.IdZavodnik;
+
+          //        var prihlasky = _context.Prihlasky
+          //            .Include(p => p.Zavod)
+          //            .Where(p => p.IdZavodnik == zavodnikId)
+          //            .ToList();
+
+          //        foreach (var p in prihlasky)
+          //        {
+          //            var zaznam = new ZavodUzivateleView
+          //            {
+          //                NazevZavodu = p.Zavod.Nazev,
+          //                DatumZavodu = p.Zavod.Datum,
+          //                Castka = p.Castka,
+          //                TypPlatby = p.TypPlatby
+          //            };
+
+          //            if (p.Zavod.Datum >= DateTime.Now)
+          //                nadchazejici.Add(zaznam);
+          //            else
+          //                minule.Add(zaznam);
+
+          //            pocetStartu++;
+          //            celkovaCastka += p.Castka;
+          //        }
+          //    }
+
+          //    // ---------------------------
+          //    // DOSTUPNÉ ZÁVODY
+          //    // ---------------------------
+          //    var dostupne = _context.Zavody
+          //        .Where(z => z.Datum >= DateTime.Now)
+          //        .ToList();
+
+          //    // ---------------------------
+          //    // VIEWMODEL
+          //    // ---------------------------
+          //    var vm = new UzivatelProfilViewModel
+          //    {
+          //        Uzivatel = uzivatel,
+          //        Zavodnik = uzivatel.Zavodnik,
+          //        Kolobezky = kolobezky,
+          //        NadchazejiciZavody = nadchazejici,
+          //        MinuleZavody = minule,
+          //        PocetStartu = pocetStartu,
+          //        CelkovaCastka = celkovaCastka,
+          //        DostupneZavody = dostupne
+          //    };
+          //    return View(vm);
+          //}
+
+
+
+        // =====================================================
+        // PROFIL FOTO
+        // =====================================================
+
+        [HttpGet]
+        public IActionResult NahratFoto()
+        {
+            var check = RequireLogin();
+            if (check != null) return check;
+
+            return View();
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> NahratFoto(IFormFile foto)
+        {
+            var check = RequireLogin();
+            if (check != null) return check;
+
+            if (foto == null || foto.Length == 0)
+            {
+                ViewBag.Error = "Vyber prosím nějaký obrázek.";
+                return View();
+            }
+
+            var user = _context.Uzivatele.First(u => u.IdUzivatel == CurrentUserId);
+
+            using var ms = new MemoryStream();
+            await foto.CopyToAsync(ms);
+            user.ProfilFoto = ms.ToArray();
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Profilová fotka byla úspěšně nahrána.";
+            return RedirectToAction("Profil");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult OdstranitFoto()
+        {
+            var check = RequireLogin();
+            if (check != null) return check;
+
+            var user = _context.Uzivatele.First(u => u.IdUzivatel == CurrentUserId);
+
+            user.ProfilFoto = null;
+            _context.SaveChanges();
+
+            TempData["Success"] = "Profilová fotka byla odstraněna.";
+            return RedirectToAction("Profil");
+        }
+
+
+
+        // =====================================================
+        // VYTVOŘENÍ ZÁVODNÍKA K ÚČTU
+        // =====================================================
         [HttpGet]
         public IActionResult VytvorZavodnika()
         {
             var check = RequireLogin();
             if (check != null) return check;
+
+            var userId = CurrentUserId!.Value;
+            var uzivatel = _context.Uzivatele.First(u => u.IdUzivatel == userId);
+
+            if (uzivatel.IdZavodnik.HasValue)
+                return RedirectToAction("Profil");
+
+            ViewBag.Jmeno = uzivatel.Jmeno;
+            ViewBag.Prijmeni = uzivatel.Prijmeni;
 
             return View();
         }
@@ -248,27 +319,11 @@ namespace MotoZavodyWeb.Controllers
             var check = RequireLogin();
             if (check != null) return check;
 
-            if (string.IsNullOrWhiteSpace(jmeno) ||
-                string.IsNullOrWhiteSpace(prijmeni) ||
-                string.IsNullOrWhiteSpace(pohlavi) ||
-                string.IsNullOrWhiteSpace(urovenZkusenosti))
-            {
-                ViewBag.Error = "Vyplň všechna povinná pole.";
-                return View();
-            }
-
             var userId = CurrentUserId!.Value;
-            var uzivatel = _context.Uzivatele.FirstOrDefault(u => u.IdUzivatel == userId);
-
-            if (uzivatel == null)
-            {
-                return RedirectToAction("Login");
-            }
+            var uzivatel = _context.Uzivatele.First(u => u.IdUzivatel == userId);
 
             if (uzivatel.IdZavodnik.HasValue)
-            {
                 return RedirectToAction("Profil");
-            }
 
             var zavodnik = new Zavodnik
             {
@@ -285,50 +340,110 @@ namespace MotoZavodyWeb.Controllers
             uzivatel.IdZavodnik = zavodnik.IdZavodnik;
             _context.SaveChanges();
 
-            TempData["Success"] = "Závodnický profil byl vytvořen.";
+            TempData["Success"] = "Závodnický profil byl vytvořen!";
             return RedirectToAction("Profil");
         }
 
-        // ===========================================
-        //          PŘIHLÁŠENÍ NA ZÁVOD
-        // ===========================================
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult PrihlasitNaZavod(int idZavod)
+        // =====================================================
+        // PŘIDAT KOLOBĚŽKU
+        // =====================================================
+        [HttpGet]
+        public IActionResult PridatKolobezku()
         {
             var check = RequireLogin();
             if (check != null) return check;
 
-            var userId = CurrentUserId!.Value;
-            var uzivatel = _context.Uzivatele.FirstOrDefault(u => u.IdUzivatel == userId);
+            var uzivatel = _context.Uzivatele
+                .Include(u => u.Zavodnik)
+                .First(u => u.IdUzivatel == CurrentUserId);
 
-            if (uzivatel == null || !uzivatel.IdZavodnik.HasValue)
+            if (uzivatel.Zavodnik == null)
             {
-                TempData["Success"] = null;
-                TempData["Error"] = "K účtu není přiřazen závodník.";
+                TempData["Error"] = "Pro přidání koloběžky musíš mít vytvořený závodnický profil.";
                 return RedirectToAction("Profil");
             }
 
-            int idZavodnik = uzivatel.IdZavodnik.Value;
+            int zavodnikId = uzivatel.Zavodnik.IdZavodnik;
 
-            bool uzPrihlasen = _context.Ucasti
-                .Any(u => u.IdZavod == idZavod && u.IdZavodnik == idZavodnik);
+            var vsechny = _context.Kolobezky.ToList();
+            var moje = _context.JezdiNa
+                .Where(j => j.IdZavodnik == zavodnikId)
+                .Select(j => j.IdKolobezka)
+                .ToList();
 
-            if (!uzPrihlasen)
+            ViewBag.Kolobezky = vsechny
+                .Where(k => !moje.Contains(k.IdKolobezka))
+                .ToList();
+
+            return View();
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult PridatKolobezku(int idKolobezka)
+        {
+            var uzivatel = _context.Uzivatele
+                .Include(u => u.Zavodnik)
+                .First(u => u.IdUzivatel == CurrentUserId);
+
+            if (uzivatel.Zavodnik == null)
             {
-                var ucast = new Ucast
+                TempData["Error"] = "Pro přidání koloběžky musíš mít vytvořený závodnický profil.";
+                return RedirectToAction("Profil");
+            }
+
+            int zavodnikId = uzivatel.Zavodnik.IdZavodnik;
+
+            bool existuje = _context.JezdiNa
+                .Count(j => j.IdZavodnik == zavodnikId && j.IdKolobezka == idKolobezka) > 0;
+
+
+            if (!existuje)
+            {
+                _context.JezdiNa.Add(new JezdiNa
                 {
-                    IdZavod = idZavod,
-                    IdZavodnik = idZavodnik
-                };
+                    IdZavodnik = zavodnikId,
+                    IdKolobezka = idKolobezka
+                });
 
-                _context.Ucasti.Add(ucast);
                 _context.SaveChanges();
-
-                TempData["Success"] = "Byl jsi úspěšně přihlášen na závod.";
+                TempData["Success"] = "Koloběžka byla přidána.";
             }
 
             return RedirectToAction("Profil");
         }
+
+        // =====================================================
+        // ODEBRAT KOLOBĚŽKU
+        // =====================================================
+        public IActionResult OdebratKolobezku(int idKolobezka)
+        {
+            var uzivatel = _context.Uzivatele
+                .Include(u => u.Zavodnik)
+                .First(u => u.IdUzivatel == CurrentUserId);
+
+            if (uzivatel.Zavodnik == null)
+                return RedirectToAction("VytvorZavodnika");
+
+            int zavodnikId = uzivatel.Zavodnik.IdZavodnik;
+
+            var zaznam = _context.JezdiNa
+                .FirstOrDefault(j => j.IdZavodnik == zavodnikId && j.IdKolobezka == idKolobezka);
+
+            if (zaznam != null)
+            {
+                _context.JezdiNa.Remove(zaznam);
+                _context.SaveChanges();
+                TempData["Success"] = "Koloběžka byla odebrána.";
+            }
+
+            return RedirectToAction("Profil");
+        }
+
+
     }
 }
+
+
+

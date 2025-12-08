@@ -1,160 +1,274 @@
 ﻿@model MotoZavodyWeb.Models.UzivatelProfilViewModel
-
 @{
     ViewData["Title"] = "Můj profil";
 }
 
-<h2>Můj profil</h2>
+<h2 class="mb-4 fw-bold">
+    <i class="bi bi-person-fill"></i> Můj profil
+</h2>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-warning">
+        @TempData["Error"]
+    </div>
+}
+
 
 @if (ViewBag.Success != null)
 {
     <div class="alert alert-success">@ViewBag.Success</div>
 }
 
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">@TempData["Error"]</div>
-}
+<!-- PROFILOVÁ FOTKA + ÚDAJE O ÚČTU -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white fw-bold">
+        <i class="bi bi-person-vcard"></i> Údaje o účtu
+    </div>
 
-<h3>Údaje o účtu</h3>
-<p><strong>Jméno:</strong> @Model.Uzivatel.Jmeno</p>
-<p><strong>E-mail:</strong> @Model.Uzivatel.Email</p>
-<p><strong>Role:</strong> @Model.Uzivatel.Role</p>
-<p><strong>Registrován:</strong> @Model.Uzivatel.DatumVytvoreni.ToString("dd.MM.yyyy HH:mm")</p>
+    <div class="card-body d-flex align-items-start gap-4">
 
-@if (Model.Zavodnik != null)
-{
-    <h3>Závodnický profil</h3>
-    <p>
-        @Model.Zavodnik.Jmeno @Model.Zavodnik.Prijmeni,
-        věk @Model.Zavodnik.Vek
-    </p>
-}
-else
-{
-    <h3>Závodnický profil</h3>
-    <p>Zatím nemáš vytvořený závodnický profil.</p>
-    <a asp-action="VytvorZavodnika" class="btn btn-primary">Vytvořit závodníka</a>
-}
+        <!-- FOTO BLOK -->
+        <div style="min-width:150px; text-align:center;">
 
-<h3>Nadcházející závody</h3>
-@if (!Model.NadchazejiciZavody.Any())
-{
-    <p>Nemáš žádné nadcházející závody.</p>
-}
-else
-{
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Závod</th>
-                <th>Datum</th>
-                <th>Částka</th>
-                <th>Typ platby</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var z in Model.NadchazejiciZavody)
+            <!-- Fotka uživatele nebo default -->
+            @if (Model.Uzivatel.ProfilFoto != null)
             {
-                <tr>
-                    <td>@z.NazevZavodu</td>
-                    <td>@z.DatumZavodu.ToString("dd.MM.yyyy")</td>
-                    <td>@z.Castka</td>
-                    <td>@z.TypPlatby</td>
-                </tr>
+                <img src="data:image/png;base64,@Convert.ToBase64String(Model.Uzivatel.ProfilFoto)"
+                     class="img-thumbnail rounded-circle mb-2"
+                     style="width:150px; height:150px; object-fit:cover;" />
             }
-        </tbody>
-    </table>
-}
-
-<h3>Proběhlé závody</h3>
-@if (!Model.MinuleZavody.Any())
-{
-    <p>Zatím žádné proběhlé závody.</p>
-}
-else
-{
-    <p>
-        Startů celkem: @Model.PocetStartu,
-        celková částka: @(Model.CelkovaCastka ?? 0)
-    </p>
-
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Závod</th>
-                <th>Datum</th>
-                <th>Částka</th>
-                <th>Typ platby</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var z in Model.MinuleZavody)
+            else
             {
-                <tr>
-                    <td>@z.NazevZavodu</td>
-                    <td>@z.DatumZavodu.ToString("dd.MM.yyyy")</td>
-                    <td>@z.Castka</td>
-                    <td>@z.TypPlatby</td>
-                </tr>
+                <img src="/images/default-user.png"
+                     class="img-thumbnail rounded-circle mb-2"
+                     style="width:150px; height:150px; object-fit:cover;" />
             }
-        </tbody>
-    </table>
-}
 
-<h3>Moje koloběžky</h3>
-@if (!Model.Kolobezky.Any())
-{
-    <p>Nemáš přiřazené žádné koloběžky.</p>
-}
-else
-{
-    <ul>
-        @foreach (var k in Model.Kolobezky)
+            <!-- Formulář pro nahrání fotky -->
+            <form asp-action="NahratFoto" method="post" enctype="multipart/form-data" class="mt-2">
+                <input type="file" name="foto" class="form-control form-control-sm mb-2" accept="image/*" />
+                <button class="btn btn-sm btn-outline-primary w-100">
+                    <i class="bi bi-upload"></i> Nahrát fotku
+                </button>
+            </form>
+
+            <!-- Tlačítko pro odstranění fotky (pouze pokud existuje) -->
+            @if (Model.Uzivatel.ProfilFoto != null)
+            {
+                <form asp-action="OdstranitFoto" method="post" class="mt-2">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-sm btn-outline-danger w-100">
+                        <i class="bi bi-trash"></i> Odstranit fotku
+                    </button>
+                </form>
+            }
+        </div>
+
+        <!-- INFORMACE O ÚČTU -->
+        <div>
+            <p><strong>Jméno:</strong> @Model.Uzivatel.Jmeno @Model.Uzivatel.Prijmeni</p>
+            <p><strong>E-mail:</strong> @Model.Uzivatel.Email</p>
+            <p><strong>Registrován:</strong> @Model.Uzivatel.DatumVytvoreni.ToString("dd.MM.yyyy HH:mm")</p>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ====== ZÁVODNICKÝ PROFIL ====== -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-dark text-white fw-bold">
+        <i class="bi bi-bicycle"></i> Závodnický profil
+    </div>
+    <div class="card-body">
+        @if (Model.Zavodnik != null)
         {
-            <li>@k.Znacka @k.Model</li>
+            <p><strong>Jméno:</strong> @Model.Zavodnik.Jmeno @Model.Zavodnik.Prijmeni</p>
+            <p><strong>Věk:</strong> @Model.Zavodnik.Vek</p>
+            <p><strong>Pohlaví:</strong> @Model.Zavodnik.Pohlavi</p>
+            <p><strong>Úroveň zkušeností:</strong> @Model.Zavodnik.UrovenZkusenosti</p>
         }
-    </ul>
-}
+        else
+        {
+            <p>Nemáš vytvořený závodnický profil.</p>
+            <a asp-action="VytvorZavodnika" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Vytvořit profil závodníka
+            </a>
+        }
+    </div>
+</div>
 
-<h3>Dostupné závody k přihlášení</h3>
-@if (Model.Zavodnik == null)
-{
-    <p>Nejprve si vytvoř závodnický profil.</p>
-}
-else if (!Model.DostupneZavody.Any())
-{
-    <p>Aktuálně není žádný závod, na který by ses mohl přihlásit.</p>
-}
-else
-{
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Závod</th>
-                <th>Datum</th>
-                <th>Místo</th>
-                <th>Startovné</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var z in Model.DostupneZavody)
-            {
-                <tr>
-                    <td>@z.NazevZavodu</td>
-                    <td>@z.Datum.ToString("dd.MM.yyyy")</td>
-                    <td>@z.Misto</td>
-                    <td>@z.Startovne</td>
-                    <td>
-                        <form asp-action="PrihlasitNaZavod" method="post" class="d-inline">
+<!-- ====== NADCHÁZEJÍCÍ ZÁVODY ====== -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-success text-white fw-bold">
+        <i class="bi bi-calendar-event"></i> Nadcházející závody
+    </div>
+    <div class="card-body">
+        @if (!Model.NadchazejiciZavody.Any())
+        {
+            <p>Nemáš žádné nadcházející závody.</p>
+        }
+        else
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Závod</th>
+                        <th>Datum</th>
+                        <th>Částka</th>
+                        <th>Typ platby</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var z in Model.NadchazejiciZavody)
+                    {
+                        <tr>
+                            <td>@z.NazevZavodu</td>
+                            <td>@z.DatumZavodu.ToString("dd.MM.yyyy")</td>
+                            <td>@z.Castka Kč</td>
+                            <td>@z.TypPlatby</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<!-- ====== PROBĚHLÉ ZÁVODY ====== -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-secondary text-white fw-bold">
+        <i class="bi bi-flag-checkered"></i> Proběhlé závody
+    </div>
+    <div class="card-body">
+        @if (!Model.MinuleZavody.Any())
+        {
+            <p>Zatím žádné proběhlé závody.</p>
+        }
+        else
+        {
+            <p><strong>Startů celkem:</strong> @Model.PocetStartu</p>
+            <p><strong>Celková částka:</strong> @(Model.CelkovaCastka ?? 0) Kč</p>
+
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Závod</th>
+                        <th>Datum</th>
+                        <th>Částka</th>
+                        <th>Typ platby</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var z in Model.MinuleZavody)
+                    {
+                        <tr>
+                            <td>@z.NazevZavodu</td>
+                            <td>@z.DatumZavodu.ToString("dd.MM.yyyy")</td>
+                            <td>@z.Castka Kč</td>
+                            <td>@z.TypPlatby</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<!-- ====== KOLOBĚŽKY ====== -->
+<div class="card shadow-sm mb-4">
+
+    <!-- Header bez tlačítka -->
+    <div class="card-header bg-info text-white fw-bold">
+        <i class="bi bi-box2-heart"></i> Moje koloběžky
+    </div>
+
+    <div class="card-body">
+        @if (!Model.Kolobezky.Any())
+        {
+            <p>Nemáš přiřazené žádné koloběžky.</p>
+
+            <a asp-action="PridatKolobezku" class="btn btn-info mt-2">
+                <i class="bi bi-plus-circle"></i> Přidat koloběžku
+            </a>
+        }
+        else
+        {
+            <ul class="list-group">
+                @foreach (var k in Model.Kolobezky)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>@k.Znacka @k.Model</span>
+
+                        <form asp-action="OdebratKolobezku" method="post" class="m-0 p-0">
                             @Html.AntiForgeryToken()
-                            <input type="hidden" name="idZavod" value="@z.IdZavod" />
-                            <button type="submit" class="btn btn-success btn-sm">Přihlásit se</button>
+                            <input type="hidden" name="idKolobezka" value="@k.IdKolobezka" />
+                            <button class="btn btn-danger btn-sm">
+                                <i class="bi bi-trash"></i> Odebrat
+                            </button>
                         </form>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+                    </li>
+                }
+            </ul>
+
+            <!-- Tlačítko přidat koloběžku i když už nějaké jsou -->
+            <a asp-action="PridatKolobezku" class="btn btn-info mt-3">
+                <i class="bi bi-plus-circle"></i> Přidat další koloběžku
+            </a>
+        }
+    </div>
+</div>
+
+
+
+<!-- ====== DOSTUPNÉ ZÁVODY ====== -->
+<div class="card shadow-sm mb-5">
+    <div class="card-header bg-warning fw-bold">
+        <i class="bi bi-trophy-fill"></i> Dostupné závody k přihlášení
+    </div>
+    <div class="card-body">
+        @if (Model.Zavodnik == null)
+        {
+            <p>Nejprve si vytvoř závodnický profil.</p>
+        }
+        else if (!Model.DostupneZavody.Any())
+        {
+            <p>Aktuálně není žádný závod, na který by ses mohl přihlásit.</p>
+        }
+        else
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Závod</th>
+                        <th>Datum</th>
+                        <th>Místo</th>
+                        <th>Startovné</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var z in Model.DostupneZavody)
+                    {
+                        <tr>
+                            <td>@z.NazevZavodu</td>
+                            <td>@z.Datum.ToString("dd.MM.yyyy")</td>
+                            <td>@z.Misto</td>
+                            <td>@z.Startovne Kč</td>
+                            <td>
+                                <form asp-action="PrihlasitNaZavod" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="idZavod" value="@z.IdZavod" />
+                                    <button class="btn btn-success btn-sm">
+                                        <i class="bi bi-check-circle"></i> Přihlásit se
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

@@ -6,7 +6,7 @@ namespace MotoZavodyWeb.Models
         public string Nazev { get; set; } = null!;
 
         public int IdAdresa { get; set; }
-        public Adresa Adresa { get; set; } = null!; /*- jebka to cely db*/
+        public Adresa Adresa { get; set; } = null!; 
 
         public ICollection<Zavod> Zavody { get; set; } = new List<Zavod>();
     }

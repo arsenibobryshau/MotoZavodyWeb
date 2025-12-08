@@ -1,8 +1,4 @@
-﻿@{
-    ViewBag.Title = "Registrace";
-}
-
-<h2>Registrace</h2>
+﻿<h2>Registrace</h2>
 
 @if (ViewBag.Error != null)
 {
@@ -10,9 +6,15 @@
 }
 
 <form method="post">
+
     <div class="mb-3">
         <label class="form-label">Jméno</label>
         <input class="form-control" name="jmeno" required />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Příjmení</label>
+        <input class="form-control" name="prijmeni" required />
     </div>
 
     <div class="mb-3">

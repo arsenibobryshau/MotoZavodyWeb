@@ -304,3 +304,9 @@ body.dark-mode {
     body.dark-mode table tbody tr td {
         color: #e6edf3 !important;
     }
+
+html.dark-preload body,
+html.dark-preload {
+    background: #0d1117 !important;
+    color: #e6edf3 !important;
+}

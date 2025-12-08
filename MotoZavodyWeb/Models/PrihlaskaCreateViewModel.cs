@@ -11,6 +11,9 @@ namespace MotoZavodyWeb.Models
         [Display(Name = "Závodník")]
         public int IdZavodnik { get; set; }
 
+        // Jméno závodníka pro zobrazení, když si přihlašuje sám sebe
+        public string? JmenoZavodnika { get; set; }
+
         [Required]
         [Display(Name = "Závod")]
         public int IdZavod { get; set; }

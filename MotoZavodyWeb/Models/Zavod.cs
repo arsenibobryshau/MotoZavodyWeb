@@ -16,11 +16,17 @@ namespace MotoZavodyWeb.Models
         public int IdMisto { get; set; }
         public int IdHodnoceni { get; set; }
 
-        public TypZavodu TypZavodu { get; set; } = null!;
-        public Misto Misto { get; set; } = null!;
-        public Hodnoceni Hodnoceni { get; set; } = null!;
+        [ForeignKey(nameof(IdTypZavodu))]
+        public TypZavodu? TypZavodu { get; set; }
+
+        [ForeignKey(nameof(IdMisto))]
+        public Misto? Misto { get; set; }
+
+        [ForeignKey(nameof(IdHodnoceni))]
+        public Hodnoceni? Hodnoceni { get; set; }
 
         public ICollection<Ucast> Ucasti { get; set; } = new List<Ucast>();
         public ICollection<Organizace> Organizatori { get; set; } = new List<Organizace>();
     }
+
 }

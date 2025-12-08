@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Nahrát dokument";
+    var role = Context.Session.GetString("UserRole");
 }
 
 <h2>Nahrát dokument závodníka</h2>
@@ -22,6 +23,13 @@
         <input asp-for="Soubor" type="file" class="form-control" />
         <span asp-validation-for="Soubor" class="text-danger"></span>
     </div>
+
+    @if (role == "ADMIN")
+    {
+        <div class="form-group mt-2">
+            <label><input type="checkbox" asp-for="ViditelneVsem" /> Viditelné všem</label>
+        </div>
+    }
 
     <br />
     <button type="submit" class="btn btn-primary">Nahrát</button>

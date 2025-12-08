@@ -1,0 +1,42 @@
+﻿@{
+    ViewData["Title"] = "Přidat koloběžku";
+}
+
+<h2 class="mb-4 fw-bold">
+    <i class="bi bi-plus-circle"></i> Přidat koloběžku
+</h2>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white fw-bold">
+        Vyber koloběžku, kterou chceš přidat
+    </div>
+
+    <div class="card-body">
+        @if (!((List<MotoZavodyWeb.Models.Kolobezka>)ViewBag.Kolobezky).Any())
+        {
+            <p>Všechny dostupné koloběžky už máš přiřazené.</p>
+        }
+        else
+        {
+            <form asp-action="PridatKolobezku" method="post">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Koloběžka</label>
+                    <select name="idKolobezka" class="form-control">
+                        @foreach (var k in ViewBag.Kolobezky)
+                        {
+                            <option value="@k.IdKolobezka">@k.Znacka @k.Model</option>
+                        }
+                    </select>
+                </div>
+
+                <button class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Přidat koloběžku
+                </button>
+
+                <a asp-action="Profil" class="btn btn-secondary ms-2">
+                    Zpět
+                </a>
+            </form>
+        }
+    </div>
+</div>

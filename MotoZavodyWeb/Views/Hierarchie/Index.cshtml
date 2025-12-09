@@ -1,0 +1,32 @@
+﻿@model IEnumerable<MotoZavodyWeb.Models.HierarchieItem>
+
+@{
+    ViewData["Title"] = "Hierarchie závodů";
+}
+
+<h2 class="mb-4">Hierarchický přehled (Strom)</h2>
+
+<div class="alert alert-info">
+    <i class="bi bi-diagram-3"></i> Zobrazení vazeb: Závod -> Organizátor -> Podřízení
+</div>
+
+<div class="card p-4 shadow-sm">
+    <ul class="list-unstyled">
+        @foreach (var item in Model)
+        {
+            // Odsazení podle úrovně (level) ze stromu
+            var padding = (item.Uroven - 1) * 40;
+
+            <li style="padding-left: @(padding)px; margin-bottom: 5px;">
+                @if (item.Uroven == 1)
+                {
+                    <strong class="text-primary"><i class="bi bi-folder-fill"></i> @item.Text</strong>
+                }
+                else
+                {
+                    <span><i class="bi bi-arrow-return-right text-secondary"></i> @item.Text</span>
+                }
+            </li>
+        }
+    </ul>
+</div>

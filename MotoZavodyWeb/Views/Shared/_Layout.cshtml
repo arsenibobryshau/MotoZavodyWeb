@@ -48,6 +48,10 @@
                         <a class="nav-link" asp-controller="ZavodyPrehled" asp-action="Index">Přehled závodů</a>
                     </li>
 
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Hierarchie" asp-action="Index">Strom</a>
+                    </li>
+
                     <!-- POUZE USER A ADMIN -->
                     @if (Context.Session.GetInt32("UserId") != null)
                     {

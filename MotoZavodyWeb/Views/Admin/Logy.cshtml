@@ -1,0 +1,48 @@
+﻿@model IEnumerable<MotoZavodyWeb.Models.LogPolozka>
+
+@{
+    ViewData["Title"] = "Auditní log plateb";
+}
+
+<h2 class="mb-4">Auditní log plateb (Historie)</h2>
+
+<p class="text-muted">
+    Záznamy o změnách v tabulce PLATBY (trigger TR_PLATBY_LOG).
+</p>
+
+<table class="table table-sm table-striped table-bordered">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Datum</th>
+            <th>Uživatel (DB)</th>
+            <th>Operace</th>
+            <th>ID Platby</th>
+            <th>Stará částka</th>
+            <th>Nová částka</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var log in Model)
+        {
+            <tr>
+                <td>@log.IdLog</td>
+                <td>@log.Datum.ToString("dd.MM.yyyy HH:mm:ss")</td>
+                <td>@log.Uzivatel</td>
+                <td>
+                    @if (log.Operace == "INSERT") { <span class="badge bg-success">INSERT</span> }
+                    else if (log.Operace == "UPDATE") { <span class="badge bg-warning text-dark">UPDATE</span> }
+                    else if (log.Operace == "DELETE") { <span class="badge bg-danger">DELETE</span> }
+                    else { @log.Operace }
+                </td>
+                <td>@log.IdPlatby</td>
+                <td class="text-end">@(log.StaraCastka?.ToString("F2") ?? "-")</td>
+                <td class="text-end fw-bold">@(log.NovaCastka?.ToString("F2") ?? "-")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="mt-3">
+    <a asp-action="Index" class="btn btn-secondary">Zpět na Dashboard</a>
+</div>

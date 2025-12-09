@@ -8,10 +8,12 @@
 
 @if (role == "ADMIN")
 {
-    <a asp-action="Create" class="btn btn-success mb-3">Přidat závod</a>
+    <a asp-action="Create" class="btn btn-success mb-3">
+        <i class="bi bi-plus-lg"></i> Přidat závod
+    </a>
 }
 
-<table class="table">
+<table class="table table-striped align-middle">
     <thead>
         <tr>
             <th>Název závodu</th>
@@ -20,18 +22,45 @@
             <th>Startovné</th>
             <th>Typ závodu</th>
             <th>Hodnocení</th>
+            @if (role == "ADMIN")
+            {
+                <th>Akce</th>
+            }
         </tr>
     </thead>
     <tbody>
         @foreach (var z in Model)
         {
             <tr>
-                <td>@z.NazevZavodu</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@z.IdZavod" class="fw-bold text-decoration-none">
+                        @z.NazevZavodu
+                    </a>
+                </td>
                 <td>@z.Datum.ToShortDateString()</td>
-                <td>@z.Misto, @z.Mesto (@z.Ulice @z.Cp)</td>
-                <td>@z.Startovne</td>
-                <td>@z.TypZavodu</td>
+                <td>@z.Misto</td>
+                <td>@z.Startovne Kč</td>
+                <td><span class="badge bg-info text-dark">@z.TypZavodu</span></td>
                 <td>@z.MetodaHodnoceni</td>
+
+                @if (role == "ADMIN")
+                {
+                    <td>
+                        <div class="btn-group">
+                            <a asp-action="Edit" asp-route-id="@z.IdZavod" class="btn btn-sm btn-outline-warning">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form asp-action="Delete" method="post" class="d-inline"
+                                  onsubmit="return confirm('Opravdu smazat závod @z.NazevZavodu?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@z.IdZavod" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                }
             </tr>
         }
     </tbody>

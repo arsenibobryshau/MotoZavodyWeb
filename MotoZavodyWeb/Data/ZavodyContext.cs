@@ -32,6 +32,8 @@ namespace MotoZavodyWeb.Data
         public DbSet<DokumentZavodnika> DokumentyZavodniku { get; set; } = null!;
         public DbSet<Uzivatel> Uzivatele { get; set; } = null!;
         public DbSet<ZavodDetailView> ZavodyDetail { get; set; } = null!;
+        public DbSet<HierarchieItem> Hierarchie { get; set; } = null!;
+        public DbSet<LogPolozka> PlatbyLog { get; set; } = null!;
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -325,6 +327,20 @@ namespace MotoZavodyWeb.Data
                       .OnDelete(DeleteBehavior.Restrict);
 
                 entity.Navigation(m => m.Adresa).AutoInclude(false);
+            });
+
+            // ----- LOGY (Bod 21) -----
+            modelBuilder.Entity<LogPolozka>(entity =>
+            {
+                entity.ToTable("PLATBY_LOG");
+                entity.HasKey(e => e.IdLog);
+            });
+
+            // ----- HIERARCHIE (Bod 17) -----
+            modelBuilder.Entity<HierarchieItem>(entity =>
+            {
+                entity.HasNoKey();
+                entity.ToView("V_ZAVODY_HIERARCHIE");
             });
 
         }

@@ -1,0 +1,49 @@
+@model MotoZavodyWeb.Models.Zavodnik
+
+@{
+    ViewData["Title"] = "Upravit závodníka";
+}
+
+<h2>Upravit závodníka</h2>
+
+<div class="card p-4 shadow-sm">
+    <form asp-action="Edit" method="post">
+        <input type="hidden" asp-for="IdZavodnik" />
+
+        <div class="mb-3">
+            <label class="form-label">Jméno</label>
+            <input asp-for="Jmeno" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Pøíjmení</label>
+            <input asp-for="Prijmeni" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Vìk</label>
+            <input asp-for="Vek" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Pohlaví</label>
+            <select asp-for="Pohlavi" class="form-control">
+                <option value="M">Muž</option>
+                <option value="Z">Žena</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Úroveò zkušeností</label>
+            <select asp-for="UrovenZkusenosti" class="form-control">
+                <option value="D">D - Zaèáteèník</option>
+                <option value="C">C - Mírnì pokroèilý</option>
+                <option value="B">B - Pokroèilý</option>
+                <option value="A">A - Profesionál</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-warning">Uložit zmìny</button>
+        <a asp-action="Index" class="btn btn-secondary">Zpìt</a>
+    </form>
+</div>

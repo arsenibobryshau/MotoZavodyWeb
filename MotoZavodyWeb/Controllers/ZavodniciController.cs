@@ -129,5 +129,37 @@ namespace MotoZavodyWeb.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+        // =====================================================
+        // EDIT (Bod 15)
+        // =====================================================
+        public async Task<IActionResult> Edit(int id)
+        {
+            var role = HttpContext.Session.GetString("UserRole");
+            if (role != "ADMIN") return Unauthorized();
+
+            var zavodnik = await _context.Zavodnici.FindAsync(id);
+            if (zavodnik == null) return NotFound();
+
+            return View(zavodnik);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, Zavodnik model)
+        {
+            var role = HttpContext.Session.GetString("UserRole");
+            if (role != "ADMIN") return Unauthorized();
+
+            if (id != model.IdZavodnik) return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                _context.Update(model);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            return View(model);
+        }
     }
 }

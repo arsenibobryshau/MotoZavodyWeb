@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using MotoZavodyWeb.Data;
 using MotoZavodyWeb.Models;
+using Oracle.ManagedDataAccess.Client;
+using System.Data;
 
 namespace MotoZavodyWeb.Controllers
 {
@@ -34,7 +36,7 @@ namespace MotoZavodyWeb.Controllers
         }
 
         // ---------------------------
-        // Přehled uživatelů
+        // Přehled uživatelů (Bez ID)
         // ---------------------------
         public IActionResult Uzivatele()
         {
@@ -60,19 +62,13 @@ namespace MotoZavodyWeb.Controllers
             if (check != null) return check;
 
             var uzivatel = _context.Uzivatele.FirstOrDefault(u => u.IdUzivatel == idUzivatel);
-            if (uzivatel == null)
-            {
-                return NotFound();
-            }
+            if (uzivatel == null) return NotFound();
 
-            if (role != "USER" && role != "ADMIN")
+            if (role == "USER" || role == "ADMIN")
             {
-                // fallback – nic neuděláme
-                return RedirectToAction("Uzivatele");
+                uzivatel.Role = role;
+                _context.SaveChanges();
             }
-
-            uzivatel.Role = role;
-            _context.SaveChanges();
 
             return RedirectToAction("Uzivatele");
         }
@@ -88,13 +84,8 @@ namespace MotoZavodyWeb.Controllers
             if (check != null) return check;
 
             var uzivatel = _context.Uzivatele.FirstOrDefault(u => u.IdUzivatel == idUzivatel);
-            if (uzivatel == null)
-            {
-                return NotFound();
-            }
+            if (uzivatel == null) return NotFound();
 
-            // jednoduchý reset – nastavení hesla na "123456"
-            // používáme stejnou hashovací funkci jako v UzivateleControlleru
             string noveHeslo = "123456";
             using var sha = System.Security.Cryptography.SHA256.Create();
             var bytes = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(noveHeslo));
@@ -102,7 +93,7 @@ namespace MotoZavodyWeb.Controllers
 
             _context.SaveChanges();
 
-            TempData["Success"] = $"Uživateli {uzivatel.Email} bylo nastaveno nové heslo: {noveHeslo}";
+            TempData["Success"] = $"Uživateli {uzivatel.Email} bylo nastaveno heslo: {noveHeslo}";
             return RedirectToAction("Uzivatele");
         }
 
@@ -117,12 +108,8 @@ namespace MotoZavodyWeb.Controllers
             if (check != null) return check;
 
             var uzivatel = _context.Uzivatele.FirstOrDefault(u => u.IdUzivatel == idUzivatel);
-            if (uzivatel == null)
-            {
-                return NotFound();
-            }
+            if (uzivatel == null) return NotFound();
 
-            // pro jistotu nepovolíme smazat sám sebe
             if (CurrentUserId.HasValue && uzivatel.IdUzivatel == CurrentUserId.Value)
             {
                 TempData["Error"] = "Nemůžeš smazat sám sebe.";
@@ -133,6 +120,86 @@ namespace MotoZavodyWeb.Controllers
             _context.SaveChanges();
 
             return RedirectToAction("Uzivatele");
+        }
+
+        // ---------------------------
+        // Emulace uživatele (Bod 27)
+        // ---------------------------
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Emulovat(int idUzivatel)
+        {
+            var check = RequireAdmin();
+            if (check != null) return check;
+
+            var uzivatel = _context.Uzivatele.FirstOrDefault(u => u.IdUzivatel == idUzivatel);
+            if (uzivatel == null) return NotFound();
+
+            // Přepíšeme Session aktuálního admina daty cílového uživatele
+            HttpContext.Session.SetInt32("UserId", uzivatel.IdUzivatel);
+            HttpContext.Session.SetString("UserRole", uzivatel.Role);
+            HttpContext.Session.SetString("UserFullName", $"{uzivatel.Jmeno} {uzivatel.Prijmeni}");
+
+            // Poznámka: Pro návrat zpět by se musel admin odhlásit a znovu přihlásit, 
+            // nebo bychom museli uložit původní ID do jiné session proměnné.
+            // Pro splnění zadání stačí toto přepnutí.
+
+            TempData["Success"] = $"Nyní jste přihlášen jako {uzivatel.Email}.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        // ---------------------------
+        // Systémový katalog (Bod 30)
+        // ---------------------------
+        public IActionResult SystemovyKatalog()
+        {
+            var check = RequireAdmin();
+            if (check != null) return check;
+
+            var objekty = new List<SystemovyObjekt>();
+
+            // Použijeme ADO.NET pro přímý dotaz na systémová data
+            using (var command = _context.Database.GetDbConnection().CreateCommand())
+            {
+                command.CommandText = @"
+                    SELECT OBJECT_NAME, OBJECT_TYPE, STATUS 
+                    FROM USER_OBJECTS 
+                    WHERE OBJECT_TYPE IN ('TABLE', 'VIEW', 'PROCEDURE', 'FUNCTION', 'TRIGGER', 'SEQUENCE')
+                    ORDER BY OBJECT_TYPE, OBJECT_NAME";
+
+                _context.Database.OpenConnection();
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        objekty.Add(new SystemovyObjekt
+                        {
+                            Nazev = reader["OBJECT_NAME"].ToString()!,
+                            Typ = reader["OBJECT_TYPE"].ToString()!,
+                            Status = reader["STATUS"].ToString()!
+                        });
+                    }
+                }
+            }
+
+            return View(objekty);
+        }
+
+        // ---------------------------
+        // Logy / Historie (Bod 21)
+        // ---------------------------
+        public IActionResult Logy()
+        {
+            var check = RequireAdmin();
+            if (check != null) return check;
+
+            // Načteme logy seřazené od nejnovějších
+            var logy = _context.PlatbyLog
+                .OrderByDescending(l => l.Datum)
+                .ToList();
+
+            return View(logy);
         }
     }
 }

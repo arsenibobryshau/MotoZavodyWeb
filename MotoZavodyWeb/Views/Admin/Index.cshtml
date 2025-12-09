@@ -1,15 +1,63 @@
 ﻿@{
-    ViewData["Title"] = "Admin – přehled";
+    ViewData["Title"] = "Admin Dashboard";
 }
 
-<h2>Admin – přehled</h2>
+<div class="container py-4">
+    <h1 class="mb-4 text-center fw-bold">🛠️ Administrace</h1>
 
-<div class="mb-3">
-    <p><strong>Počet uživatelů:</strong> @ViewBag.PocetUzivatelu</p>
-    <p><strong>Počet ADMIN:</strong> @ViewBag.PocetAdminu</p>
-    <p><strong>Počet USER:</strong> @ViewBag.PocetUseru</p>
+    <div class="row g-4 justify-content-center">
+        <div class="col-md-12 mb-2">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h3 class="text-primary fw-bold">@ViewBag.PocetUzivatelu</h3>
+                            <p class="text-muted">Celkem uživatelů</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 class="text-danger fw-bold">@ViewBag.PocetAdminu</h3>
+                            <p class="text-muted">Administrátorů</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 class="text-success fw-bold">@ViewBag.PocetUseru</h3>
+                            <p class="text-muted">Běžných uživatelů</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm hover-effect">
+                <div class="card-body text-center">
+                    <i class="bi bi-people-fill text-primary" style="font-size: 3rem;"></i>
+                    <h5 class="card-title mt-3">Správa uživatelů</h5>
+                    <p class="card-text text-muted">Editace rolí, mazání uživatelů, reset hesel a emulace.</p>
+                    <a asp-action="Uzivatele" class="btn btn-primary w-100 stretched-link">Spravovat</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm hover-effect">
+                <div class="card-body text-center">
+                    <i class="bi bi-database-gear text-warning" style="font-size: 3rem;"></i>
+                    <h5 class="card-title mt-3">Systémový katalog</h5>
+                    <p class="card-text text-muted">Přehled tabulek, procedur, triggerů a sekvencí v DB.</p>
+                    <a asp-action="SystemovyKatalog" class="btn btn-warning w-100 stretched-link">Zobrazit objekty</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm hover-effect">
+                <div class="card-body text-center">
+                    <i class="bi bi-journal-text text-info" style="font-size: 3rem;"></i>
+                    <h5 class="card-title mt-3">Historie a Logy</h5>
+                    <p class="card-text text-muted">Historie změn a logování operací (Audit).</p>
+                    <a asp-action="Logy" class="btn btn-info text-white w-100 stretched-link">Zobrazit logy</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-
-<p>
-    <a asp-action="Uzivatele" class="btn btn-primary">Správa uživatelů</a>
-</p>

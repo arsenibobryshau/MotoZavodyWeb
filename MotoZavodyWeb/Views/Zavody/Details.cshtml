@@ -19,16 +19,23 @@
         <dd class="col-sm-9">@Model.TypZavodu?.Nazev</dd>
 
         <dt class="col-sm-3">Startovné</dt>
-        <dd class="col-sm-9">@Model.Startovne</dd>
+        <dd class="col-sm-9">@Model.Startovne Kè</dd>
 
         <dt class="col-sm-3">Hodnocení</dt>
         <dd class="col-sm-9">@Model.Hodnoceni?.Metoda</dd>
+
+        <dt class="col-sm-3 text-success">Aktuální tržba (Funkce)</dt>
+        <dd class="col-sm-9 text-success fw-bold">@ViewBag.Trzba Kè</dd>
     </dl>
 
-    <a asp-action="Register"
-       asp-route-id="@Model.IdZavod"
-       class="btn btn-primary mt-3">
-        Registrovat se
-    </a>
+    <div class="mt-3">
+        <a asp-action="Register"
+           asp-route-id="@Model.IdZavod"
+           class="btn btn-primary">
+            Registrovat se
+        </a>
+
+        <a asp-action="Index" class="btn btn-secondary ms-2">Zpìt na seznam</a>
+    </div>
 
 </div>

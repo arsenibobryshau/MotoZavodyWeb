@@ -2,7 +2,10 @@
 using Microsoft.EntityFrameworkCore;
 using MotoZavodyWeb.Data;
 using MotoZavodyWeb.Models;
-    
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Oracle.ManagedDataAccess.Client; // Nutné pro OracleParameter
+using System.Data;
+
 namespace MotoZavodyWeb.Controllers
 {
     public class ZavodyController : Controller
@@ -37,13 +40,44 @@ namespace MotoZavodyWeb.Controllers
             if (zavod == null)
                 return NotFound();
 
+            // ---------------------------------------------------------
+            // BOD 4: Volání PL/SQL funkce FN_TRZBA_ZAVODU
+            // ---------------------------------------------------------
+            decimal trzba = 0;
+            try
+            {
+                using (var command = _context.Database.GetDbConnection().CreateCommand())
+                {
+                    command.CommandText = "SELECT FN_TRZBA_ZAVODU(:p_id) FROM DUAL";
+                    var param = new OracleParameter("p_id", id);
+                    command.Parameters.Add(param);
+
+                    _context.Database.OpenConnection();
+                    var result = command.ExecuteScalar();
+
+                    if (result != null && result != DBNull.Value)
+                    {
+                        // Oracle vrací číslo často jako decimal nebo OracleDecimal
+                        trzba = Convert.ToDecimal(result);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // Pokud funkce neexistuje nebo selže, zobrazíme 0 nebo chybu do logu
+                // Pro účely semestrální práce to stačí ignorovat (zobrazí se 0)
+                trzba = 0;
+            }
+
+            ViewBag.Trzba = trzba;
+            // ---------------------------------------------------------
+
             return View(zavod);
         }
 
         // GET: /Zavody/Register/5
         public IActionResult Register(int id)
         {
-            // id = IdZavod, v reálu bys tu načetl závod + aktuálně přihlášeného závodníka
             var model = new Ucast { IdZavod = id };
             return View(model);
         }
@@ -62,40 +96,30 @@ namespace MotoZavodyWeb.Controllers
             return RedirectToAction("Details", new { id = model.IdZavod });
         }
 
-        // GET: /Zavody/Create
+        // ---------------------------
+        // CREATE
+        // ---------------------------
         public IActionResult Create()
         {
             if (HttpContext.Session.GetString("UserRole") != "ADMIN")
                 return Unauthorized();
 
-            ViewBag.Typy = _context.TypyZavodu
-                .Select(t => new { t.IdTypZavodu, t.Nazev })
-                .ToList();
-
-            ViewBag.Mista = _context.Mista
-                .Select(m => new { m.IdMisto, m.Nazev })
-                .ToList();
-
-            ViewBag.Hodnoceni = _context.Hodnoceni
-                .Select(h => new { h.IdHodnoceni, h.Metoda })
-                .ToList();
+            ViewBag.Typy = _context.TypyZavodu.ToList();
+            ViewBag.Mista = _context.Mista.ToList();
+            ViewBag.Hodnoceni = _context.Hodnoceni.ToList();
 
             return View();
         }
 
-
-        // POST: /Zavody/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Zavod model)
         {
             if (!ModelState.IsValid)
             {
-                // ← MUSÍŠ DOPLNIT, aby selecty nebyly NULL
                 ViewBag.Typy = _context.TypyZavodu.ToList();
                 ViewBag.Mista = _context.Mista.ToList();
                 ViewBag.Hodnoceni = _context.Hodnoceni.ToList();
-
                 return View(model);
             }
 
@@ -104,7 +128,72 @@ namespace MotoZavodyWeb.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // ---------------------------
+        // EDIT (Bod 15, 23)
+        // ---------------------------
+        public async Task<IActionResult> Edit(int id)
+        {
+            if (HttpContext.Session.GetString("UserRole") != "ADMIN")
+                return Unauthorized();
 
+            var zavod = await _context.Zavody.FindAsync(id);
+            if (zavod == null) return NotFound();
 
+            ViewBag.Typy = _context.TypyZavodu.ToList();
+            ViewBag.Mista = _context.Mista.ToList();
+            ViewBag.Hodnoceni = _context.Hodnoceni.ToList();
+
+            return View(zavod);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, Zavod model)
+        {
+            if (HttpContext.Session.GetString("UserRole") != "ADMIN")
+                return Unauthorized();
+
+            if (id != model.IdZavod) return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(model);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!_context.Zavody.Any(e => e.IdZavod == id)) return NotFound();
+                    throw;
+                }
+                return RedirectToAction(nameof(Index));
+            }
+
+            ViewBag.Typy = _context.TypyZavodu.ToList();
+            ViewBag.Mista = _context.Mista.ToList();
+            ViewBag.Hodnoceni = _context.Hodnoceni.ToList();
+            return View(model);
+        }
+
+        // ---------------------------
+        // DELETE (Bod 23)
+        // ---------------------------
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            if (HttpContext.Session.GetString("UserRole") != "ADMIN")
+                return Unauthorized();
+
+            var zavod = await _context.Zavody.FindAsync(id);
+            if (zavod != null)
+            {
+                _context.Zavody.Remove(zavod);
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
     }
 }

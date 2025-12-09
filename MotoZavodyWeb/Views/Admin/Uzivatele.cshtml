@@ -1,12 +1,10 @@
 ﻿@model IEnumerable<MotoZavodyWeb.Models.Uzivatel>
 
-@removeTagHelper "Microsoft.AspNetCore.Mvc.TagHelpers.OptionTagHelper, Microsoft.AspNetCore.Mvc.TagHelpers"
-
 @{
-    ViewData["Title"] = "Admin – uživatelé";
+    ViewData["Title"] = "Správa uživatelů";
 }
 
-<h2>Admin – uživatelé</h2>
+<h2>Správa uživatelů</h2>
 
 @if (TempData["Success"] != null)
 {
@@ -18,15 +16,13 @@
     <div class="alert alert-danger">@TempData["Error"]</div>
 }
 
-<table class="table table-striped">
+<table class="table table-striped align-middle">
     <thead>
         <tr>
-            <th>ID</th>
             <th>Jméno</th>
             <th>E-mail</th>
             <th>Role</th>
             <th>Závodník</th>
-            <th>Registrován</th>
             <th>Poslední přihlášení</th>
             <th>Akce</th>
         </tr>
@@ -35,53 +31,70 @@
         @foreach (var u in Model)
         {
             <tr>
-                <td>@u.IdUzivatel</td>
-                <td>@u.Jmeno</td>
+                <td>@u.Jmeno @u.Prijmeni</td>
                 <td>@u.Email</td>
-                <td>@u.Role</td>
+                <td>
+                    <span class="badge @(u.Role == "ADMIN" ? "bg-danger" : "bg-secondary")">
+                        @u.Role
+                    </span>
+                </td>
                 <td>
                     @if (u.Zavodnik != null)
                     {
-                        @($"{u.Zavodnik.Jmeno} {u.Zavodnik.Prijmeni}")
+                        <span class="text-success fw-bold">Ano</span>
                     }
                     else
                     {
-                        @:<i>není přiřazen</i>
+                        <span class="text-muted">Ne</span>
                     }
                 </td>
-                <td>@u.DatumVytvoreni.ToString("dd.MM.yyyy HH:mm")</td>
                 <td>
                     @if (u.DatumPoslednihoPrihlaseni.HasValue)
                     {
                         @u.DatumPoslednihoPrihlaseni.Value.ToString("dd.MM.yyyy HH:mm")
                     }
+                    else
+                    {
+                        @:-
+                    }
                 </td>
                 <td>
-                    <!-- změna role -->
-                    <form asp-action="ZmenRoli" method="post" class="d-inline">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="idUzivatel" value="@u.IdUzivatel" />
-                        <select name="role" class="form-select form-select-sm d-inline w-auto">
-                            <option value="USER" @(u.Role == "USER" ? "selected" : "")>USER</option>
-                            <option value="ADMIN" @(u.Role == "ADMIN" ? "selected" : "")>ADMIN</option>
-                        </select>
-                        <button type="submit" class="btn btn-sm btn-primary">Uložit</button>
-                    </form>
+                    <div class="btn-group" role="group">
+                        <form asp-action="ZmenRoli" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="idUzivatel" value="@u.IdUzivatel" />
+                            <input type="hidden" name="role" value="@(u.Role == "USER" ? "ADMIN" : "USER")" />
+                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Přepnout roli">
+                                <i class="bi bi-person-badge"></i> @(u.Role == "USER" ? "Nastavit Admin" : "Nastavit User")
+                            </button>
+                        </form>
 
-                    <!-- reset hesla -->
-                    <form asp-action="ResetHesla" method="post" class="d-inline ms-1">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="idUzivatel" value="@u.IdUzivatel" />
-                        <button type="submit" class="btn btn-sm btn-warning">Reset hesla</button>
-                    </form>
+                        <form asp-action="ResetHesla" method="post" class="d-inline ms-1">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="idUzivatel" value="@u.IdUzivatel" />
+                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Resetovat heslo na 123456">
+                                <i class="bi bi-key"></i>
+                            </button>
+                        </form>
 
-                    <!-- smazání uživatele -->
-                    <form asp-action="SmazUzivatele" method="post" class="d-inline ms-1"
-                          onsubmit="return confirm('Opravdu smazat tohoto uživatele?');">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="idUzivatel" value="@u.IdUzivatel" />
-                        <button type="submit" class="btn btn-sm btn-danger">Smazat</button>
-                    </form>
+                        <form asp-action="Emulovat" method="post" class="d-inline ms-1"
+                              onsubmit="return confirm('Opravdu se chcete přihlásit jako tento uživatel?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="idUzivatel" value="@u.IdUzivatel" />
+                            <button type="submit" class="btn btn-sm btn-outline-dark" title="Přihlásit se jako tento uživatel">
+                                <i class="bi bi-eye"></i> Emulovat
+                            </button>
+                        </form>
+
+                        <form asp-action="SmazUzivatele" method="post" class="d-inline ms-1"
+                              onsubmit="return confirm('Opravdu smazat?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="idUzivatel" value="@u.IdUzivatel" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Smazat uživatele">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
                 </td>
             </tr>
         }

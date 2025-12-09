@@ -1,0 +1,56 @@
+﻿@model MotoZavodyWeb.Models.Zavod
+
+@{
+    ViewData["Title"] = "Upravit závod";
+}
+
+<h2>Upravit závod</h2>
+
+<div class="card p-4 shadow-sm">
+    <form asp-action="Edit" method="post">
+        <input type="hidden" asp-for="IdZavod" />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="mb-3">
+            <label class="form-label">Název závodu</label>
+            <input asp-for="Nazev" class="form-control" />
+            <span asp-validation-for="Nazev" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Datum</label>
+            <input asp-for="Datum" type="date" class="form-control" />
+            <span asp-validation-for="Datum" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Startovné</label>
+            <input asp-for="Startovne" class="form-control" />
+            <span asp-validation-for="Startovne" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Typ závodu</label>
+            <select asp-for="IdTypZavodu" class="form-control"
+                    asp-items="@(new SelectList(ViewBag.Typy, "IdTypZavodu", "Nazev"))">
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Místo</label>
+            <select asp-for="IdMisto" class="form-control"
+                    asp-items="@(new SelectList(ViewBag.Mista, "IdMisto", "Nazev"))">
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Hodnocení</label>
+            <select asp-for="IdHodnoceni" class="form-control"
+                    asp-items="@(new SelectList(ViewBag.Hodnoceni, "IdHodnoceni", "Metoda"))">
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-warning">Uložit změny</button>
+        <a asp-action="Index" class="btn btn-secondary">Zpět</a>
+    </form>
+</div>

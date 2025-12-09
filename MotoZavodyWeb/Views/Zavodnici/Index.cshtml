@@ -3,6 +3,7 @@
 @{
     var role = ViewBag.Role as string;
     bool maProfil = ViewBag.MaProfil ?? false;
+    bool isAdmin = role == "ADMIN";
 }
 
 <h2>Závodníci</h2>
@@ -16,9 +17,7 @@ else if (role == "USER" && !maProfil)
     <a asp-action="Create" class="btn btn-success mb-3">Vytvořit můj závodnický profil</a>
 }
 
-</p>
-
-<table class="table">
+<table class="table table-hover">
     <thead>
         <tr>
             <th>Jméno</th>
@@ -26,6 +25,10 @@ else if (role == "USER" && !maProfil)
             <th>Věk</th>
             <th>Pohlaví</th>
             <th>Úroveň</th>
+            @if (isAdmin)
+            {
+                <th>Akce</th>
+            }
         </tr>
     </thead>
     <tbody>
@@ -33,10 +36,35 @@ else if (role == "USER" && !maProfil)
         {
             <tr>
                 <td>@z.Jmeno</td>
-                <td>@z.Prijmeni</td>
+                <td>
+                    @if (isAdmin)
+                    {
+                        @z.Prijmeni
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(z.Prijmeni) && z.Prijmeni.Length > 1)
+                        {
+                            @($"{z.Prijmeni.Substring(0, 1)}****")
+                        }
+                        else
+                        {
+                            @("****")
+                        }
+                    }
+                </td>
                 <td>@z.Vek</td>
                 <td>@z.Pohlavi</td>
                 <td>@z.UrovenZkusenosti</td>
+
+                @if (isAdmin)
+                {
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@z.IdZavodnik" class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                }
             </tr>
         }
     </tbody>

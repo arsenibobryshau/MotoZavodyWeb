@@ -60,11 +60,25 @@ else if (role == "USER" && !maProfil)
                 @if (isAdmin)
                 {
                     <td>
-                        <a asp-action="Edit" asp-route-id="@z.IdZavodnik" class="btn btn-sm btn-outline-warning">
-                            <i class="bi bi-pencil"></i>
-                        </a>
+                        <div class="btn-group">
+                            <a asp-action="Edit"
+                               asp-route-id="@z.IdZavodnik"
+                               class="btn btn-sm btn-outline-warning">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+
+                            <form asp-action="Delete" method="post" class="d-inline"
+                                  onsubmit="return confirm('Opravdu smazat závodníka @z.Jmeno @z.Prijmeni?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@z.IdZavodnik" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 }
+
             </tr>
         }
     </tbody>

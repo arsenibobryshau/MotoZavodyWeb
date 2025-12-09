@@ -178,36 +178,7 @@ namespace MotoZavodyWeb.Data
                 .Property(h => h.IdHodnoceni).HasColumnName("ID_HODNOCENI");
             modelBuilder.Entity<Hodnoceni>()
                 .Property(h => h.Metoda).HasColumnName("METODA");
-
-            // ===========================================
-            //               MAPOVÁNÍ FK
-            // ===========================================
-
-            //modelBuilder.Entity<Zavod>()
-            //    .HasOne(z => z.TypZavodu)
-            //    .WithMany()
-            //    .HasForeignKey(z => z.IdTypZavodu)
-            //    .HasConstraintName("FK_ZAVODY_TYP_ZAVODU");
-
-            //modelBuilder.Entity<Zavod>()
-            //    .HasOne(z => z.Misto)
-            //    .WithMany(m => m.Zavody)
-            //    .HasForeignKey(z => z.IdMisto)
-            //    .HasConstraintName("FK_ZAVODY_MISTO");
-
-            //modelBuilder.Entity<Zavod>()
-            //    .HasOne(z => z.Hodnoceni)
-            //    .WithMany()
-            //    .HasForeignKey(z => z.IdHodnoceni)
-            //    .HasConstraintName("FK_ZAVODY_HODNOCENI");
-
-            modelBuilder.Entity<Misto>()
-                .HasOne(m => m.Adresa)
-                .WithMany()
-                .HasForeignKey(m => m.IdAdresa)
-                .HasConstraintName("MISTO_ADRESA_FK")
-                .OnDelete(DeleteBehavior.Restrict);
-
+            
             // ===========================================
             //          VIEW: V_ZAVODY_DETAIL
             // ===========================================
@@ -320,13 +291,44 @@ namespace MotoZavodyWeb.Data
                 entity.Property(m => m.Nazev).HasColumnName("NAZEV");
                 entity.Property(m => m.IdAdresa).HasColumnName("ID_ADRESA");
 
-                entity.HasOne(m => m.Adresa)
-                      .WithMany()
-                      .HasForeignKey(m => m.IdAdresa)
-                      .HasConstraintName("MISTO_ADRESA_FK")
-                      .OnDelete(DeleteBehavior.Restrict);
+                modelBuilder.Entity<Misto>()
+                    .HasOne(m => m.Adresa)
+                    .WithMany(a => a.Mista)
+                    .HasForeignKey(m => m.IdAdresa)
+                    .HasConstraintName("MISTO_ADRESA_FK")
+                    .OnDelete(DeleteBehavior.Restrict);
 
                 entity.Navigation(m => m.Adresa).AutoInclude(false);
+            });
+            // ===========================================
+            //              UCAST
+            // ===========================================
+            modelBuilder.Entity<Ucast>(entity =>
+            {
+                entity.ToTable("UCASTI");
+
+                entity.HasKey(u => new { u.IdZavodnik, u.IdZavod });
+
+                entity.Property(u => u.IdZavodnik).HasColumnName("ID_ZAVODNIK");
+                entity.Property(u => u.IdZavod).HasColumnName("ID_ZAVOD");
+                entity.Property(u => u.Poradi).HasColumnName("PORADI");
+                entity.Property(u => u.Vysledek).HasColumnName("VYSLEDEK");
+                entity.Property(u => u.IdPlatby).HasColumnName("ID_PLATBY");
+
+                entity.HasOne(u => u.Zavodnik)
+                    .WithMany(z => z.Ucasti)
+                    .HasForeignKey(u => u.IdZavodnik)
+                    .HasConstraintName("FK_UCASTI_ZAVODNIK");
+
+                entity.HasOne(u => u.Zavod)
+                    .WithMany(z => z.Ucasti)
+                    .HasForeignKey(u => u.IdZavod)
+                    .HasConstraintName("FK_UCASTI_ZAVOD");
+
+                entity.HasOne(u => u.Platba)
+                    .WithMany(p => p.Ucasti)
+                    .HasForeignKey(u => u.IdPlatby)
+                    .HasConstraintName("FK_UCASTI_PLATBA");
             });
 
             // ----- LOGY (Bod 21) -----

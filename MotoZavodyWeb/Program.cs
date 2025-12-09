@@ -1,7 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using MotoZavodyWeb.Data;
+using System.Globalization;
+
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Nastavení CS na webu
+var cultureInfo = new CultureInfo("cs-CZ");
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // MVC
 builder.Services.AddControllersWithViews();

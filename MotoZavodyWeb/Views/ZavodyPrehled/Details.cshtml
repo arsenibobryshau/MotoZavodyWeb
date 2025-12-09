@@ -1,7 +1,7 @@
-@model MotoZavodyWeb.Models.Zavod
+Ôªø@model MotoZavodyWeb.Models.Zavod
 
 @{
-    ViewData["Title"] = "Detail z·vodu";
+    ViewData["Title"] = "Detail z√°vodu";
     var role = Context.Session.GetString("UserRole");
 }
 
@@ -13,26 +13,26 @@
         <dt class="col-sm-3">Datum</dt>
         <dd class="col-sm-9">@Model.Datum?.ToShortDateString()</dd>
 
-        <dt class="col-sm-3">MÌsto</dt>
+        <dt class="col-sm-3">M√≠sto</dt>
         <dd class="col-sm-9">@Model.Misto?.Nazev</dd>
 
         <dt class="col-sm-3">Typ</dt>
         <dd class="col-sm-9">@Model.TypZavodu?.Nazev</dd>
 
-        <dt class="col-sm-3">StartovnÈ</dt>
-        <dd class="col-sm-9">@Model.Startovne KË</dd>
+        <dt class="col-sm-3">Startovn√©</dt>
+        <dd class="col-sm-9">@Model.Startovne Kƒç</dd>
 
-        <dt class="col-sm-3">HodnocenÌ</dt>
+        <dt class="col-sm-3">Hodnocen√≠</dt>
         <dd class="col-sm-9">@Model.Hodnoceni?.Metoda</dd>
 
         @if (role == "ADMIN")
         {
-            <dt class="col-sm-3 text-success">Aktu·lnÌ trûba (Funkce)</dt>
-            <dd class="col-sm-9 text-success fw-bold">@ViewBag.Trzba KË</dd>
+            <dt class="col-sm-3 text-success">Aktu√°ln√≠ tr≈æba (Funkce)</dt>
+            <dd class="col-sm-9 text-success fw-bold">@ViewBag.Trzba Kƒç</dd>
         }
     </dl>
 
-    @{       
+    @{
         var isLogged = Context.Session.GetInt32("UserId") != null;
     }
 
@@ -55,7 +55,7 @@
             </a>
         }
 
-        <a asp-action="Index" class="btn btn-secondary ms-2">ZpÏt na seznam</a>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Zpƒõt na seznam</a>
     </div>
 
 </div>

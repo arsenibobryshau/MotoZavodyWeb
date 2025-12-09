@@ -14,6 +14,7 @@
          ADMIN: může vybrat závodníka
          USER: vidí jen sebe (readonly)
          ========================== -->
+    <!-- ZÁVODNÍK -->
     @if (isAdmin)
     {
         <div class="form-group">
@@ -38,7 +39,6 @@
         <label asp-for="IdZavod" class="control-label"></label>
         <select id="zavodSelect" asp-for="IdZavod" class="form-control">
             <option value="">-- vyberte závod --</option>
-
             @foreach (var zavod in Model.Zavody)
             {
                 <option value="@zavod.Value"
@@ -53,7 +53,17 @@
     <!-- ČÁSTKA -->
     <div class="form-group">
         <label asp-for="Castka" class="control-label"></label>
-        <input asp-for="Castka" id="Castka" class="form-control" readonly />
+
+        @if (isAdmin)
+        {
+            <input asp-for="Castka" id="Castka" class="form-control" />
+        }
+        else
+        {
+            <input asp-for="Castka" id="Castka" class="form-control" readonly />
+        }
+
+        <span asp-validation-for="Castka" class="text-danger"></span>
     </div>
 
     <!-- PLATBA -->
@@ -69,6 +79,7 @@
     <div class="form-group">
         <label asp-for="CisloKarty" class="control-label"></label>
         <input asp-for="CisloKarty" class="form-control" />
+        <span asp-validation-for="CisloKarty" class="text-danger"></span>
         <small class="form-text text-muted">Vyplňte pouze při platbě kartou.</small>
     </div>
 

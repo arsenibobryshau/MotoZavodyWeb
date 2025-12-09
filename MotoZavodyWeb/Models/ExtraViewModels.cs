@@ -9,7 +9,7 @@ namespace MotoZavodyWeb.Models
     {
         // Předpokládám, že view vrací textový výpis už odsazený nebo s číslem úrovně
         // Pokud view vrací sloupec "TEXT", "NAZEV" nebo podobně
-        [Column("TEXT")]
+        [Column("NAZEV")]
         public string Text { get; set; } = string.Empty;
 
         [Column("UROVEN")]
@@ -23,7 +23,7 @@ namespace MotoZavodyWeb.Models
         [Column("ID_LOG")]
         public int IdLog { get; set; }
 
-        [Column("DATUM")]
+        [Column("DATUM_OPERACE")]
         public DateTime Datum { get; set; }
 
         [Column("UZIVATEL")]
@@ -31,6 +31,9 @@ namespace MotoZavodyWeb.Models
 
         [Column("OPERACE")]
         public string Operace { get; set; } = string.Empty; // INSERT/UPDATE/DELETE
+
+        [Column("CASTKA")]
+        public decimal? Castka { get; set; }
 
         [Column("STARA_CASTKA")]
         public decimal? StaraCastka { get; set; }

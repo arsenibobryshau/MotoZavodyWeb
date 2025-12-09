@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using MotoZavodyWeb.Data;
 using MotoZavodyWeb.Models;
+using Oracle.ManagedDataAccess.Client;
 
 namespace MotoZavodyWeb.Controllers
 {
@@ -65,6 +66,55 @@ namespace MotoZavodyWeb.Controllers
                 .ToList();
 
             return View(q.ToList());
+
+        }
+        // ---------------------------
+        // DETAIL
+        // ---------------------------  
+        public async Task<IActionResult> Details(int id)
+        {
+            var zavod = await _context.Zavody
+                .Include(z => z.TypZavodu)
+                .Include(z => z.Misto)
+                .Include(z => z.Hodnoceni)
+                .FirstOrDefaultAsync(z => z.IdZavod == id);
+
+            if (zavod == null)
+                return NotFound();
+
+            // ---------------------------------------------------------
+            // BOD 4: Volání PL/SQL funkce FN_TRZBA_ZAVODU
+            // ---------------------------------------------------------
+            decimal trzba = 0;
+            try
+            {
+                using (var command = _context.Database.GetDbConnection().CreateCommand())
+                {
+                    command.CommandText = "SELECT FN_TRZBA_ZAVODU(:p_id) FROM DUAL";
+                    var param = new OracleParameter("p_id", id);
+                    command.Parameters.Add(param);
+
+                    _context.Database.OpenConnection();
+                    var result = command.ExecuteScalar();
+
+                    if (result != null && result != DBNull.Value)
+                    {
+                        // Oracle vrací číslo často jako decimal nebo OracleDecimal
+                        trzba = Convert.ToDecimal(result);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // Pokud funkce neexistuje nebo selže, zobrazíme 0 nebo chybu do logu
+                // Pro účely semestrální práce to stačí ignorovat (zobrazí se 0)
+                trzba = 0;
+            }
+
+            ViewBag.Trzba = trzba;
+            // ---------------------------------------------------------
+
+            return View(zavod);
         }
     }
 }

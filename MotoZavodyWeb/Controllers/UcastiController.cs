@@ -123,7 +123,6 @@ namespace MotoZavodyWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PrihlasitSe(PrihlaskaCreateViewModel model)
         {
-            // ID závodníka nemusí být spolehlivé z POSTu → načteme ho vždy podle session
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null)
                 return RedirectToAction("Login", "Uzivatele");
@@ -186,6 +185,31 @@ namespace MotoZavodyWeb.Controllers
 
                 throw;
             }
+        }      
+
+
+        // =====================================
+        // DELETE
+        // =====================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Delete(int idZavodnik, int idZavod)
+        {
+            if (HttpContext.Session.GetString("UserRole") != "ADMIN")
+                return Unauthorized();
+
+            var ucast = _context.Ucasti
+                .FirstOrDefault(u => u.IdZavodnik == idZavodnik && u.IdZavod == idZavod);
+
+            if (ucast == null)
+                return NotFound();
+
+            _context.Ucasti.Remove(ucast);
+            _context.SaveChanges();
+
+            return RedirectToAction(nameof(Index));
         }
+
+
     }
 }

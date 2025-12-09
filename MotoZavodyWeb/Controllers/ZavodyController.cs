@@ -28,7 +28,9 @@ namespace MotoZavodyWeb.Controllers
             return View(zavody);
         }
 
-        // GET: /Zavody/Details/5
+        // ---------------------------
+        // DETAIL
+        // ---------------------------  
         public async Task<IActionResult> Details(int id)
         {
             var zavod = await _context.Zavody
@@ -74,15 +76,15 @@ namespace MotoZavodyWeb.Controllers
 
             return View(zavod);
         }
-
-        // GET: /Zavody/Register/5
+        // ---------------------------
+        // REGISTRACE
+        // ---------------------------       
         public IActionResult Register(int id)
         {
             var model = new Ucast { IdZavod = id };
             return View(model);
         }
 
-        // POST: /Zavody/Register
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(Ucast model)
@@ -104,9 +106,17 @@ namespace MotoZavodyWeb.Controllers
             if (HttpContext.Session.GetString("UserRole") != "ADMIN")
                 return Unauthorized();
 
-            ViewBag.Typy = _context.TypyZavodu.ToList();
-            ViewBag.Mista = _context.Mista.ToList();
-            ViewBag.Hodnoceni = _context.Hodnoceni.ToList();
+            ViewBag.Typy = _context.TypyZavodu
+                .Select(t => new { t.IdTypZavodu, t.Nazev })
+                .ToList();
+
+            ViewBag.Mista = _context.Mista
+                .Select(m => new { m.IdMisto, m.Nazev })
+                .ToList();
+
+            ViewBag.Hodnoceni = _context.Hodnoceni
+                .Select(h => new { h.IdHodnoceni, h.Metoda })
+                .ToList();
 
             return View();
         }
@@ -129,7 +139,7 @@ namespace MotoZavodyWeb.Controllers
         }
 
         // ---------------------------
-        // EDIT (Bod 15, 23)
+        // EDIT 
         // ---------------------------
         public async Task<IActionResult> Edit(int id)
         {
@@ -139,9 +149,17 @@ namespace MotoZavodyWeb.Controllers
             var zavod = await _context.Zavody.FindAsync(id);
             if (zavod == null) return NotFound();
 
-            ViewBag.Typy = _context.TypyZavodu.ToList();
-            ViewBag.Mista = _context.Mista.ToList();
-            ViewBag.Hodnoceni = _context.Hodnoceni.ToList();
+            ViewBag.Typy = _context.TypyZavodu
+                 .Select(t => new { t.IdTypZavodu, t.Nazev })
+                 .ToList();
+
+            ViewBag.Mista = _context.Mista
+                .Select(m => new { m.IdMisto, m.Nazev })
+                .ToList();
+
+            ViewBag.Hodnoceni = _context.Hodnoceni
+                .Select(h => new { h.IdHodnoceni, h.Metoda })
+                .ToList();
 
             return View(zavod);
         }
@@ -177,7 +195,7 @@ namespace MotoZavodyWeb.Controllers
         }
 
         // ---------------------------
-        // DELETE (Bod 23)
+        // DELETE 
         // ---------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]

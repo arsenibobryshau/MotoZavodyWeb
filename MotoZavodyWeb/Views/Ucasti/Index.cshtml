@@ -1,23 +1,31 @@
 ﻿@model IEnumerable<MotoZavodyWeb.Models.UcastDetailView>
 
 @{
-    ViewData["Title"] = "Účasti";
+    var role = Context.Session.GetString("UserRole");
+    var isLogged = Context.Session.GetInt32("UserId") != null;
 }
 
-<h2>Účasti závodníků</h2>
 
-<p>
-    @if (Context.Session.GetString("UserRole") == "ADMIN")
-    {
-        <a asp-action="Create" class="btn btn-primary">Přihlásit závodníka na závod</a>
-    }
-    else
-    {
-        <a asp-action="PrihlasitSe" class="btn btn-success">Přihlásit se na závod</a>
-    }
-</p>
+<h2 class="mb-3">Moje účasti</h2>
 
-<table class="table">
+<div class="mb-3">
+    @if (role == "ADMIN")
+    {
+        <a asp-action="Create" class="btn btn-primary">
+            Přihlásit závodníka na závod
+        </a>
+    }
+    else if (role == "USER")
+    {          
+        <a asp-controller="Ucasti"
+           asp-action="PrihlasitSe"
+           class="btn btn-primary">
+            Registrovat se na závod
+        </a>
+    }
+</div>
+
+<table class="table table-striped align-middle">
     <thead>
         <tr>
             <th>Závodník</th>
@@ -25,6 +33,11 @@
             <th>Datum závodu</th>
             <th>Částka</th>
             <th>Typ platby</th>
+
+            @if (Context.Session.GetString("UserRole") == "ADMIN")
+            {
+                <th>Akce</th>
+            }
         </tr>
     </thead>
     <tbody>
@@ -34,7 +47,8 @@
                 <td>@u.Jmeno @u.Prijmeni</td>
                 <td>@u.NazevZavodu</td>
                 <td>@u.DatumZavodu.ToShortDateString()</td>
-                <td>@u.Castka</td>
+                <td>@u.Castka Kč</td>
+
                 <td>
                     @if (u.TypPlatby == "H")
                     {
@@ -49,6 +63,27 @@
                         @u.TypPlatby
                     }
                 </td>
+
+                @if (Context.Session.GetString("UserRole") == "ADMIN")
+                {
+                    <td>
+                        <div class="btn-group">
+
+                            <!-- DELETE -->
+                            <form asp-action="Delete" method="post" class="d-inline"
+                                  onsubmit="return confirm('Opravdu odstranit účast závodníka @u.Jmeno @u.Prijmeni ze závodu @u.NazevZavodu?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="idZavodnik" value="@u.IdZavodnik" />
+                                <input type="hidden" name="idZavod" value="@u.IdZavod" />
+
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+
+                        </div>
+                    </td>
+                }
             </tr>
         }
     </tbody>

@@ -18,6 +18,7 @@
             <th>Uživatel (DB)</th>
             <th>Operace</th>
             <th>ID Platby</th>
+            <th>Částka</th>
             <th>Stará částka</th>
             <th>Nová částka</th>
         </tr>
@@ -36,6 +37,7 @@
                     else { @log.Operace }
                 </td>
                 <td>@log.IdPlatby</td>
+                <td class="text-end fw-bold">@log.Castka?.ToString("F2") Kč</td>
                 <td class="text-end">@(log.StaraCastka?.ToString("F2") ?? "-")</td>
                 <td class="text-end fw-bold">@(log.NovaCastka?.ToString("F2") ?? "-")</td>
             </tr>

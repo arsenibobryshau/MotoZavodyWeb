@@ -131,7 +131,7 @@ namespace MotoZavodyWeb.Controllers
         }
 
         // =====================================================
-        // EDIT (Bod 15)
+        // EDIT 
         // =====================================================
         public async Task<IActionResult> Edit(int id)
         {
@@ -160,6 +160,25 @@ namespace MotoZavodyWeb.Controllers
                 return RedirectToAction(nameof(Index));
             }
             return View(model);
+        }
+        // =====================================================
+        // DELETE
+        // =====================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var role = HttpContext.Session.GetString("UserRole");
+            if (role != "ADMIN") return Unauthorized();
+
+            var zavodnik = await _context.Zavodnici.FindAsync(id);
+            if (zavodnik == null)
+                return NotFound();
+
+            _context.Zavodnici.Remove(zavodnik);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }

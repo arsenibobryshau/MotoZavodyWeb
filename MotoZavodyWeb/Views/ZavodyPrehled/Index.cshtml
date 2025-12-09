@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = "Přehled závodů";
+    var role = Context.Session.GetString("UserRole");
+    var isLogged = Context.Session.GetInt32("UserId") != null;
 }
 
 <h2 class="mb-4">Přehled závodů</h2>
@@ -85,31 +87,52 @@
             <th>Typ závodu</th>
             <th>Hodnocení</th>
             <th class="text-end">Startovné</th>
+
+            @if (isLogged)
+            {
+                <th class="text-center">Akce</th>
+            }
         </tr>
     </thead>
     <tbody>
-        @if (Model != null && Model.Any())
-        {
-            @foreach (var z in Model)
-            {
-                <tr>
-                    <td>@z.Nazev</td>
-                    <td>@z.Rok</td>
-                    <td>@z.TypZavodu</td>
-                    <td>@z.Hodnoceni</td>
-                    <td class="text-end">
-                        @z.Startovne Kč
-                    </td>
-                </tr>
-            }
-        }
-        else
+        @foreach (var z in Model)
         {
             <tr>
-                <td colspan="5" class="text-center text-muted">
-                    Nebyly nalezeny žádné závody pro zvolený filtr.
+                <td>
+                    <a asp-action="Details" asp-route-id="@z.IdZavod" class="fw-bold text-decoration-none">
+                        @z.Nazev
+                    </a>
                 </td>
+                <td>@z.Rok</td>
+                <td><span class="badge bg-info text-dark">@z.TypZavodu</span></td>
+                <td>@z.Hodnoceni</td>
+                <td class="text-end">@z.Startovne Kč</td>
+
+                @if (isLogged)
+                {
+                    <td class="text-center">
+                        @if (role == "ADMIN")
+                        {
+                            <a asp-controller="Ucasti"
+                               asp-action="PrihlasitSe"
+                               asp-route-id="@z.IdZavod"
+                               class="btn btn-sm btn-primary">
+                                Přihlásit závodníka
+                            </a>
+                        }
+                        else if (role == "USER")
+                        {
+                            <a asp-controller="Ucasti"
+                               asp-action="PrihlasitSe"
+                               asp-route-id="@z.IdZavod"
+                               class="btn btn-sm btn-primary">
+                                Registrovat se
+                            </a>
+                        }
+                    </td>
+                }
             </tr>
         }
     </tbody>
 </table>
+

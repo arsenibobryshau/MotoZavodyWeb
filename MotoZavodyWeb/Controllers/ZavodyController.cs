@@ -20,7 +20,6 @@ namespace MotoZavodyWeb.Controllers
         // GET: /Zavody
         public async Task<IActionResult> Index()
         {
-            // načte data z Oracle view V_ZAVODY_DETAIL
             var zavody = await _context.ZavodyDetail
                 .OrderBy(z => z.Datum)
                 .ToListAsync();
@@ -29,7 +28,7 @@ namespace MotoZavodyWeb.Controllers
         }
 
         // ---------------------------
-        // DETAIL
+        // DETAIL (S VÝSLEDKY A ORGANIZÁTORY)
         // ---------------------------  
         public async Task<IActionResult> Details(int id)
         {
@@ -37,14 +36,19 @@ namespace MotoZavodyWeb.Controllers
                 .Include(z => z.TypZavodu)
                 .Include(z => z.Misto)
                 .Include(z => z.Hodnoceni)
+                // Načtení organizátorů
+                .Include(z => z.Organizatori)
+                    .ThenInclude(o => o.Zamestnanec)
+                    .ThenInclude(zam => zam.Pozice)
+                // PŘIDÁNO: Načtení účastí a závodníků pro výsledkovou listinu
+                .Include(z => z.Ucasti)
+                    .ThenInclude(u => u.Zavodnik)
                 .FirstOrDefaultAsync(z => z.IdZavod == id);
 
             if (zavod == null)
                 return NotFound();
 
-            // ---------------------------------------------------------
-            // BOD 4: Volání PL/SQL funkce FN_TRZBA_ZAVODU
-            // ---------------------------------------------------------
+            // Funkce pro tržbu
             decimal trzba = 0;
             try
             {
@@ -59,26 +63,89 @@ namespace MotoZavodyWeb.Controllers
 
                     if (result != null && result != DBNull.Value)
                     {
-                        // Oracle vrací číslo často jako decimal nebo OracleDecimal
                         trzba = Convert.ToDecimal(result);
                     }
                 }
             }
             catch (Exception)
             {
-                // Pokud funkce neexistuje nebo selže, zobrazíme 0 nebo chybu do logu
-                // Pro účely semestrální práce to stačí ignorovat (zobrazí se 0)
                 trzba = 0;
             }
 
             ViewBag.Trzba = trzba;
-            // ---------------------------------------------------------
 
             return View(zavod);
         }
+
+    
+
+        // ---------------------------------------------
+        // NOVÉ: PŘIDAT ORGANIZÁTORA (ZAMĚSTNANCE)
+        // ---------------------------------------------
+        public IActionResult AddOrganizer(int idZavod)
+        {
+            if (HttpContext.Session.GetString("UserRole") != "ADMIN")
+                return Unauthorized();
+
+            // Vybereme zaměstnance, kteří ještě NEJSOU přiřazeni k tomuto závodu
+            var existujiciIds = _context.Organizace
+                .Where(o => o.IdZavod == idZavod)
+                .Select(o => o.IdZamestnanec)
+                .ToList();
+
+            var dostupniZamestnanci = _context.Zamestnanci
+                .Include(z => z.Pozice)
+                .Where(z => !existujiciIds.Contains(z.IdZamestnanec))
+                .Select(z => new
+                {
+                    Id = z.IdZamestnanec,
+                    Name = $"{z.Jmeno} {z.Prijmeni} ({z.Pozice.Nazev})"
+                })
+                .ToList();
+
+            ViewBag.Zamestnanci = new SelectList(dostupniZamestnanci, "Id", "Name");
+            ViewBag.IdZavod = idZavod;
+
+            var model = new Organizace { IdZavod = idZavod };
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddOrganizer(Organizace model)
+        {
+            if (HttpContext.Session.GetString("UserRole") != "ADMIN")
+                return Unauthorized();
+
+            // OPRAVA CHYBY "ORA-00904: FALSE":
+            // Místo .AnyAsync() použijeme .CountAsync(), protože Oracle neumí v SQL boolean literály.
+            int pocet = await _context.Organizace
+                .CountAsync(o => o.IdZavod == model.IdZavod && o.IdZamestnanec == model.IdZamestnanec);
+
+            bool existuje = pocet > 0;
+
+            if (existuje)
+            {
+                // Už tam je, jen přesměrujeme
+                return RedirectToAction("Details", new { id = model.IdZavod });
+            }
+
+            if (model.IdZamestnanec != 0) // Pokud byl vybrán zaměstnanec
+            {
+                _context.Organizace.Add(model);
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction("Details", new { id = model.IdZavod });
+        }
+
+        // --- ZDE MUSÍŠ MÍT I ZBYTEK PŮVODNÍCH METOD (Edit, Delete, Register, Create) ---
+        // Pokud si nejsi jistý, řekni a pošlu ti ZNOVU úplně celý soubor.
+        // Ale předpokládám, že stačí přidat ty dvě metody AddOrganizer nakonec.
+
         // ---------------------------
         // REGISTRACE
-        // ---------------------------       
+        // ---------------------------        
         public IActionResult Register(int id)
         {
             var model = new Ucast { IdZavod = id };

@@ -15,5 +15,8 @@ namespace MotoZavodyWeb.Models
 
         public decimal Castka { get; set; }
         public string TypPlatby { get; set; } = string.Empty;
+
+        public string? Poradi { get; set; }   // Nullable, protože u budoucích závodů není
+        public string? Vysledek { get; set; } // Např. čas nebo "DNF"
     }
 }

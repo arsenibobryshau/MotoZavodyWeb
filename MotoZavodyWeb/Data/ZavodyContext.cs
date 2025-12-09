@@ -115,6 +115,51 @@ namespace MotoZavodyWeb.Data
                       .HasConstraintName("FK_KOLOBEZKY_TYP");
             });
 
+            // ----- ZAMESTNANEC -----
+            modelBuilder.Entity<Zamestnanec>(entity =>
+            {
+                entity.ToTable("ZAMESTNANCI");
+                entity.HasKey(z => z.IdZamestnanec);
+
+                entity.Property(z => z.IdZamestnanec).HasColumnName("ID_ZAMESTNANEC");
+                entity.Property(z => z.Jmeno).HasColumnName("JMENO");
+                entity.Property(z => z.Prijmeni).HasColumnName("PRIJMENI");
+                entity.Property(z => z.IdPozice).HasColumnName("ID_POZICE");
+
+                entity.HasOne(z => z.Pozice)
+                    .WithMany(p => p.Zamestnanci)
+                    .HasForeignKey(z => z.IdPozice);
+            });
+
+            // ----- ORGANIZACE -----
+            modelBuilder.Entity<Organizace>(entity =>
+            {
+                entity.ToTable("ORGANIZACE");
+                entity.HasKey(o => new { o.IdZamestnanec, o.IdZavod });
+
+                
+                entity.Property(o => o.IdZamestnanec).HasColumnName("ZAMESTNANEC_ID_ZAMESTNANEC");
+                entity.Property(o => o.IdZavod).HasColumnName("ZAVOD_ID_ZAVOD");
+
+                entity.HasOne(o => o.Zamestnanec)
+                    .WithMany(z => z.OrganizovaneZavody)
+                    .HasForeignKey(o => o.IdZamestnanec);
+
+                entity.HasOne(o => o.Zavod)
+                    .WithMany(z => z.Organizatori)
+                    .HasForeignKey(o => o.IdZavod);
+            });
+
+            // ----- POZICE -----
+            modelBuilder.Entity<Pozice>(entity =>
+            {
+                entity.ToTable("POZICE");
+                entity.HasKey(p => p.IdPozice);
+
+                
+                entity.Property(p => p.IdPozice).HasColumnName("ID_POZICE");
+                entity.Property(p => p.Nazev).HasColumnName("NAZEV");
+            });
 
             // ----- JEZDI_NA -----
             modelBuilder.Entity<JezdiNa>(entity =>
@@ -216,6 +261,8 @@ namespace MotoZavodyWeb.Data
                 entity.Property(e => e.DatumZavodu).HasColumnName("DATUM_ZAVODU");
                 entity.Property(e => e.Castka).HasColumnName("CASTKA");
                 entity.Property(e => e.TypPlatby).HasColumnName("TYP_PLATBY");
+                entity.Property(e => e.Poradi).HasColumnName("PORADI");
+                entity.Property(e => e.Vysledek).HasColumnName("VYSLEDEK");
             });
 
             // ===========================================

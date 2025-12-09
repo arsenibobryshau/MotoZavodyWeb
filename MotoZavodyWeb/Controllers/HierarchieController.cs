@@ -15,8 +15,13 @@ namespace MotoZavodyWeb.Controllers
 
         public async Task<IActionResult> Index()
         {
+            // 🔒 ZABEZPEČENÍ: Přístup pouze pro ADMINA
+            if (HttpContext.Session.GetString("UserRole") != "ADMIN")
+            {
+                return Unauthorized(); // Nebo RedirectToAction("Index", "Home");
+            }
+
             // Načte data z pohledu V_ZAVODY_HIERARCHIE
-            // Očekáváme, že Oracle View už obsahuje CONNECT BY logiku
             var data = await _context.Hierarchie.ToListAsync();
             return View(data);
         }

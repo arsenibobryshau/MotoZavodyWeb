@@ -1,0 +1,25 @@
+﻿@model MotoZavodyWeb.Models.Organizace
+
+@{
+    ViewData["Title"] = "Přidat organizátora";
+}
+
+<h2>Přidat organizátora k závodu</h2>
+
+<div class="card p-4 shadow-sm">
+    <form asp-action="AddOrganizer" method="post">
+        <input type="hidden" asp-for="IdZavod" />
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">Vyberte zaměstnance</label>
+            <select asp-for="IdZamestnanec" class="form-select" asp-items="ViewBag.Zamestnanci">
+                <option value="">-- zvolte --</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Uložit a přidat
+        </button>
+        <a asp-action="Details" asp-route-id="@Model.IdZavod" class="btn btn-secondary">Zpět</a>
+    </form>
+</div>

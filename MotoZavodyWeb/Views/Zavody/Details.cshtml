@@ -3,59 +3,152 @@
 @{
     ViewData["Title"] = "Detail závodu";
     var role = Context.Session.GetString("UserRole");
+    var isAdmin = role == "ADMIN";
+    var isLogged = Context.Session.GetInt32("UserId") != null;
 }
 
 <h2 class="mb-4">@Model.Nazev</h2>
 
-<div class="card p-4 shadow-sm">
+<div class="row">
 
-    <dl class="row">
-        <dt class="col-sm-3">Datum</dt>
-        <dd class="col-sm-9">@Model.Datum?.ToShortDateString()</dd>
+    <div class="@(isLogged ? "col-md-8" : "col-md-12")">
 
-        <dt class="col-sm-3">Místo</dt>
-        <dd class="col-sm-9">@Model.Misto?.Nazev</dd>
+        <div class="card p-4 shadow-sm mb-4">
+            <h4 class="mb-3 border-bottom pb-2">Informace o závodu</h4>
+            <dl class="row">
+                <dt class="col-sm-4">Datum</dt>
+                <dd class="col-sm-8">@Model.Datum?.ToShortDateString()</dd>
 
-        <dt class="col-sm-3">Typ</dt>
-        <dd class="col-sm-9">@Model.TypZavodu?.Nazev</dd>
+                <dt class="col-sm-4">Místo</dt>
+                <dd class="col-sm-8">@Model.Misto?.Nazev</dd>
 
-        <dt class="col-sm-3">Startovné</dt>
-        <dd class="col-sm-9">@Model.Startovne Kè</dd>
+                <dt class="col-sm-4">Typ</dt>
+                <dd class="col-sm-8">@Model.TypZavodu?.Nazev</dd>
 
-        <dt class="col-sm-3">Hodnocení</dt>
-        <dd class="col-sm-9">@Model.Hodnoceni?.Metoda</dd>
+                <dt class="col-sm-4">Startovné</dt>
+                <dd class="col-sm-8">@Model.Startovne Kè</dd>
 
-        @if (role == "ADMIN")
+                <dt class="col-sm-4">Hodnocení</dt>
+                <dd class="col-sm-8">@Model.Hodnoceni?.Metoda</dd>
+
+                @if (isAdmin)
+                {
+                    <dt class="col-sm-4 text-success">Aktuální tržba (Funkce)</dt>
+                    <dd class="col-sm-8 text-success fw-bold">@ViewBag.Trzba Kè</dd>
+                }
+            </dl>
+
+            <div class="mt-3">
+                @if (isLogged)
+                {
+                    <a asp-controller="Ucasti"
+                       asp-action="PrihlasitSe"
+                       asp-route-id="@Model.IdZavod"
+                       class="btn btn-primary">
+                        Registrovat se
+                    </a>
+                }
+                else
+                {
+                    <a asp-controller="Uzivatele"
+                       asp-action="Registrace"
+                       class="btn btn-primary">
+                        Registrovat se
+                    </a>
+                }
+
+                <a asp-action="Index" class="btn btn-secondary ms-2">Zpìt na seznam</a>
+            </div>
+        </div>
+
+        @if (Model.Ucasti != null && Model.Ucasti.Any())
         {
-            <dt class="col-sm-3 text-success">Aktuální tržba (Funkce)</dt>
-            <dd class="col-sm-9 text-success fw-bold">@ViewBag.Trzba Kè</dd>
-        }
-    </dl>
+            <div class="card shadow-sm mb-4 rounded-0">
+                <div class="card-header bg-white text-dark fw-bold border-bottom-0 rounded-0 pt-3 pb-2">
+                    <i class="bi bi-trophy"></i> Výsledková listina / Startovní listina
+                </div>
 
-    @{       
-        var isLogged = Context.Session.GetInt32("UserId") != null;
-    }
-
-    <div class="mt-3">
-        @if (isLogged)
-        {
-            <a asp-controller="Ucasti"
-               asp-action="PrihlasitSe"
-               asp-route-id="@Model.IdZavod"
-               class="btn btn-primary">
-                Registrovat se
-            </a>
+                <div class="card-body p-0">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th class="text-center" style="width: 80px;">Poøadí</th>
+                                <th>Závodník</th>
+                                <th>Výsledek</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ucast in Model.Ucasti.OrderBy(u => u.Poradi))
+                            {
+                                <tr>
+                                    <td class="text-center fw-bold">
+                                        @if (!string.IsNullOrEmpty(ucast.Poradi))
+                                        {
+                                            <span class="badge bg-warning text-dark">@ucast.Poradi</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @ucast.Zavodnik.Jmeno @ucast.Zavodnik.Prijmeni
+                                    </td>
+                                    <td>
+                                        @(ucast.Vysledek ?? "Zatím bez výsledku")
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         }
-        else
-        {
-            <a asp-controller="Uzivatele"
-               asp-action="Registrace"
-               class="btn btn-primary">
-                Registrovat se
-            </a>
-        }
 
-        <a asp-action="Index" class="btn btn-secondary ms-2">Zpìt na seznam</a>
     </div>
+
+    @if (isLogged)
+    {
+        <div class="col-md-4">
+            <div class="card shadow-sm border-info">
+                <div class="card-header bg-info text-white fw-bold d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-people-fill"></i> Organizátorský tým</span>
+
+                    @if (isAdmin)
+                    {
+                        <a asp-action="AddOrganizer" asp-route-idZavod="@Model.IdZavod" class="btn btn-sm btn-light text-info fw-bold">
+                            <i class="bi bi-plus"></i> Pøidat
+                        </a>
+                    }
+                </div>
+
+                <div class="card-body p-0">
+                    @if (Model.Organizatori != null && Model.Organizatori.Any())
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var org in Model.Organizatori)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>@org.Zamestnanec?.Jmeno @org.Zamestnanec?.Prijmeni</strong>
+                                        <div class="text-muted small">
+                                            @(org.Zamestnanec?.Pozice?.Nazev ?? "Neznámá pozice")
+                                        </div>
+                                    </div>
+                                    <i class="bi bi-person-badge text-muted" style="font-size: 1.2rem;"></i>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="p-3 text-muted text-center">
+                            <i class="bi bi-info-circle"></i> Žádní pøiøazení organizátoøi.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
 
 </div>

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MotoZavodyWeb.Data;
 using MotoZavodyWeb.Models;
+using Oracle.ManagedDataAccess.Client;
+using System.Data;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -126,113 +128,133 @@ namespace MotoZavodyWeb.Controllers
         }
 
         // =====================================================
-        // PROFIL
+        // PROFIL (Upraveno pro načítání dat)
         // =====================================================
         [HttpGet]
-        public IActionResult Profil()
+        public async Task<IActionResult> Profil()
         {
             var check = RequireLogin();
             if (check != null) return check;
 
-            var uzivatel = _context.Uzivatele
+            var uzivatel = await _context.Uzivatele
                 .Include(u => u.Zavodnik)
-                .First(u => u.IdUzivatel == CurrentUserId);
+                .FirstAsync(u => u.IdUzivatel == CurrentUserId);
 
-            // ---------------------------
-            // KOLOBĚŽKY
-            // ---------------------------
+            // 1. Načtení koloběžek
             var kolobezky = new List<Kolobezka>();
-            int zavodnikId = uzivatel.Zavodnik?.IdZavodnik ?? 0;
 
+            // 2. Příprava seznamů pro závody
+            var nadchazejici = new List<UcastDetailView>();
+            var minule = new List<UcastDetailView>();
+            var dostupne = new List<ZavodDetailView>();
+
+            decimal celkovaCastka = 0;
+            int pocetStartu = 0;
+
+            // Pokud má uživatel vytvořený profil závodníka
             if (uzivatel.Zavodnik != null)
             {
-                kolobezky = _context.JezdiNa
+                int zavodnikId = uzivatel.Zavodnik.IdZavodnik;
+
+                // A) Načíst koloběžky
+                kolobezky = await _context.JezdiNa
                     .Include(j => j.Kolobezka)
                     .Where(j => j.IdZavodnik == zavodnikId)
                     .Select(j => j.Kolobezka!)
-                    .ToList();
+                    .ToListAsync();
+
+                // B) Načíst moje účasti (z View V_UCASTI_DETAIL)
+                var mojeUcasti = await _context.UcastiDetail
+                    .Where(u => u.IdZavodnik == zavodnikId)
+                    .OrderBy(u => u.DatumZavodu)
+                    .ToListAsync();
+
+                foreach (var u in mojeUcasti)
+                {
+                    if (u.DatumZavodu >= DateTime.Today)
+                        nadchazejici.Add(u);
+                    else
+                        minule.Add(u);
+
+                    celkovaCastka += u.Castka;
+                    pocetStartu++;
+                }
+
+                // C) Načíst dostupné závody (kde ještě nejsem přihlášen)
+                // Získáme ID závodů, kde už jsem
+                var mojeZavodyIds = await _context.Ucasti
+                    .Where(u => u.IdZavodnik == zavodnikId)
+                    .Select(u => u.IdZavod)
+                    .ToListAsync();
+
+                // Vybereme budoucí závody, které nejsou v mém seznamu
+                dostupne = await _context.ZavodyDetail
+                    .Where(z => z.Datum >= DateTime.Today && !mojeZavodyIds.Contains(z.IdZavod))
+                    .OrderBy(z => z.Datum)
+                    .ToListAsync();
             }
-            // ---------------------------
-            // VIEWMODEL
-            //----------------------------
+
+            // 3. Sestavení ViewModelu
             var vm = new UzivatelProfilViewModel
             {
                 Uzivatel = uzivatel,
                 Zavodnik = uzivatel.Zavodnik,
                 Kolobezky = kolobezky,
 
-                NadchazejiciZavody = new(),
-                MinuleZavody = new(),
-                PocetStartu = 0,
-                CelkovaCastka = 0,
-                DostupneZavody = new(),
+                NadchazejiciZavody = nadchazejici,
+                MinuleZavody = minule,
+                PocetStartu = pocetStartu,
+                CelkovaCastka = celkovaCastka,
+                DostupneZavody = dostupne,
             };
 
             return View(vm);
         }
 
+        // =====================================================
+        // PŘIHLÁŠENÍ NA ZÁVOD Z PROFILU (Nová metoda)
+        // =====================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PrihlasitNaZavod(int idZavod)
+        {
+            var check = RequireLogin();
+            if (check != null) return check;
 
-          //    // ---------------------------
-          //    // ZÁVODY UŽIVATELE
-          //    // ---------------------------
-          //    var nadchazejici = new List<ZavodUzivateleView>();
-          //    var minule = new List<ZavodUzivateleView>();
-          //    int pocetStartu = 0;
-          //    decimal celkovaCastka = 0;
-          //    if (uzivatel.Zavodnik != null)
-          //    {
-          //        int zavodnikId = uzivatel.Zavodnik.IdZavodnik;
+            var uzivatel = await _context.Uzivatele
+                .Include(u => u.Zavodnik)
+                .FirstAsync(u => u.IdUzivatel == CurrentUserId);
 
-          //        var prihlasky = _context.Prihlasky
-          //            .Include(p => p.Zavod)
-          //            .Where(p => p.IdZavodnik == zavodnikId)
-          //            .ToList();
+            if (uzivatel.Zavodnik == null)
+            {
+                TempData["Error"] = "Nejprve si vytvořte závodnický profil.";
+                return RedirectToAction("Profil");
+            }
 
-          //        foreach (var p in prihlasky)
-          //        {
-          //            var zaznam = new ZavodUzivateleView
-          //            {
-          //                NazevZavodu = p.Zavod.Nazev,
-          //                DatumZavodu = p.Zavod.Datum,
-          //                Castka = p.Castka,
-          //                TypPlatby = p.TypPlatby
-          //            };
+            var zavod = await _context.Zavody.FindAsync(idZavod);
+            if (zavod == null) return NotFound();
 
-          //            if (p.Zavod.Datum >= DateTime.Now)
-          //                nadchazejici.Add(zaznam);
-          //            else
-          //                minule.Add(zaznam);
+            try
+            {
+                var pIdZavodnik = new OracleParameter("p_id_zavodnik", OracleDbType.Int32, uzivatel.Zavodnik.IdZavodnik, ParameterDirection.Input);
+                var pIdZavod = new OracleParameter("p_id_zavod", OracleDbType.Int32, idZavod, ParameterDirection.Input);
+                var pCastka = new OracleParameter("p_castka", OracleDbType.Decimal, zavod.Startovne, ParameterDirection.Input);
+                var pTypPlatby = new OracleParameter("p_typ_platby", OracleDbType.Char, "H", ParameterDirection.Input);
+                var pCisloKarty = new OracleParameter("p_cislo_karty", OracleDbType.Varchar2, DBNull.Value, ParameterDirection.Input);
 
-          //            pocetStartu++;
-          //            celkovaCastka += p.Castka;
-          //        }
-          //    }
+                string sql = "BEGIN PR_PRIHLAS_ZAVODNIKA_DO_ZAVODU(:p_id_zavodnik, :p_id_zavod, :p_castka, :p_typ_platby, :p_cislo_karty); END;";
 
-          //    // ---------------------------
-          //    // DOSTUPNÉ ZÁVODY
-          //    // ---------------------------
-          //    var dostupne = _context.Zavody
-          //        .Where(z => z.Datum >= DateTime.Now)
-          //        .ToList();
+                await _context.Database.ExecuteSqlRawAsync(sql, pIdZavodnik, pIdZavod, pCastka, pTypPlatby, pCisloKarty);
 
-          //    // ---------------------------
-          //    // VIEWMODEL
-          //    // ---------------------------
-          //    var vm = new UzivatelProfilViewModel
-          //    {
-          //        Uzivatel = uzivatel,
-          //        Zavodnik = uzivatel.Zavodnik,
-          //        Kolobezky = kolobezky,
-          //        NadchazejiciZavody = nadchazejici,
-          //        MinuleZavody = minule,
-          //        PocetStartu = pocetStartu,
-          //        CelkovaCastka = celkovaCastka,
-          //        DostupneZavody = dostupne
-          //    };
-          //    return View(vm);
-          //}
+                TempData["Success"] = "Byli jste úspěšně přihlášeni na závod.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Chyba při přihlašování: " + ex.Message;
+            }
 
-
+            return RedirectToAction("Profil");
+        }
 
         // =====================================================
         // PROFIL FOTO
@@ -288,8 +310,6 @@ namespace MotoZavodyWeb.Controllers
             TempData["Success"] = "Profilová fotka byla odstraněna.";
             return RedirectToAction("Profil");
         }
-
-
 
         // =====================================================
         // VYTVOŘENÍ ZÁVODNÍKA K ÚČTU
@@ -440,10 +460,5 @@ namespace MotoZavodyWeb.Controllers
 
             return RedirectToAction("Profil");
         }
-
-
     }
 }
-
-
-

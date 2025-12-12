@@ -51,7 +51,10 @@ namespace MotoZavodyWeb.Controllers
                 return View();
             }
 
-            if (_context.Uzivatele.Any(u => u.Email == email))
+            var existujiciUzivatel = _context.Uzivatele
+                .FirstOrDefault(u => u.Email == email);
+
+            if (existujiciUzivatel != null)
             {
                 ViewBag.Error = "Uživatel s tímto e-mailem již existuje.";
                 return View();
@@ -73,6 +76,7 @@ namespace MotoZavodyWeb.Controllers
             TempData["Success"] = "Registrace proběhla úspěšně.";
             return RedirectToAction("Login");
         }
+
 
         // =====================================================
         // LOGIN

@@ -34,6 +34,7 @@ namespace MotoZavodyWeb.Data
         public DbSet<ZavodDetailView> ZavodyDetail { get; set; } = null!;
         public DbSet<HierarchieItem> Hierarchie { get; set; } = null!;
         public DbSet<LogPolozka> PlatbyLog { get; set; } = null!;
+        public DbSet<ZavodnikHistLog> ZavodniciHist { get; set; } = null!;
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -347,6 +348,28 @@ namespace MotoZavodyWeb.Data
 
                 entity.Navigation(m => m.Adresa).AutoInclude(false);
             });
+
+            // ===========================================
+            //      NOVÉ: HISTORIE ZÁVODNÍKŮ
+            // ===========================================
+            modelBuilder.Entity<ZavodnikHistLog>(entity =>
+            {
+                entity.ToTable("ZAVODNICI_HIST"); // Jméno tabulky v DB
+                entity.HasKey(e => e.IdHist);     // Primární klíč
+
+                // Mapování sloupců
+                entity.Property(e => e.IdHist).HasColumnName("ID_HIST");
+                entity.Property(e => e.IdZavodnik).HasColumnName("ID_ZAVODNIK");
+                entity.Property(e => e.Jmeno).HasColumnName("JMENO");
+                entity.Property(e => e.Prijmeni).HasColumnName("PRIJMENI");
+                entity.Property(e => e.Vek).HasColumnName("VEK");
+                entity.Property(e => e.Pohlavi).HasColumnName("POHLAVI");
+                entity.Property(e => e.UrovenZkusenosti).HasColumnName("UROVEN_ZKUSENOSTI");
+                entity.Property(e => e.Operace).HasColumnName("OPERACE");
+                entity.Property(e => e.DatumOperace).HasColumnName("DATUM_OPERACE");
+                entity.Property(e => e.Uzivatel).HasColumnName("UZIVATEL");
+            });
+
             // ===========================================
             //              UCAST
             // ===========================================

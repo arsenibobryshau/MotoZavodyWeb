@@ -194,12 +194,21 @@ namespace MotoZavodyWeb.Controllers
             var check = RequireAdmin();
             if (check != null) return check;
 
-            // Načteme logy seřazené od nejnovějších
-            var logy = _context.PlatbyLog
+            var logyPlateb = _context.PlatbyLog
                 .OrderByDescending(l => l.Datum)
                 .ToList();
 
-            return View(logy);
+            var logyZavodniku = _context.ZavodniciHist
+                .OrderByDescending(l => l.DatumOperace)
+                .ToList();
+
+            var viewModel = new AuditLogViewModel
+            {
+                LogyPlateb = logyPlateb,
+                LogyZavodniku = logyZavodniku
+            };
+
+            return View(viewModel);
         }
     }
 }

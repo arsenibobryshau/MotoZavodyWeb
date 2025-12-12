@@ -44,4 +44,44 @@ namespace MotoZavodyWeb.Models
         [Column("ID_PLATBY")]
         public int IdPlatby { get; set; }
     }
+    //Model pro Historii Závodníků (ZAVODNICI_HIST) 
+    public class ZavodnikHistLog
+    {
+        [Column("ID_HIST")]
+        public int IdHist { get; set; }
+
+        [Column("ID_ZAVODNIK")]
+        public int IdZavodnik { get; set; }
+
+        [Column("JMENO")]
+        public string Jmeno { get; set; }
+
+        [Column("PRIJMENI")]
+        public string Prijmeni { get; set; }
+
+        [Column("VEK")]
+        public int? Vek { get; set; } // Nullable, v DB může být null
+
+        [Column("POHLAVI")]
+        public string Pohlavi { get; set; }
+
+        [Column("UROVEN_ZKUSENOSTI")]
+        public string UrovenZkusenosti { get; set; }
+
+        [Column("OPERACE")]
+        public string Operace { get; set; }
+
+        [Column("DATUM_OPERACE")]
+        public DateTime DatumOperace { get; set; }
+
+        [Column("UZIVATEL")]
+        public string Uzivatel { get; set; }
+    }
+
+    //ViewModel pro zobrazení obou tabulek najednou
+    public class AuditLogViewModel
+    {
+        public IEnumerable<LogPolozka> LogyPlateb { get; set; }
+        public IEnumerable<ZavodnikHistLog> LogyZavodniku { get; set; }
+    }
 }

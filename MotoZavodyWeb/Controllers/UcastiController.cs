@@ -58,14 +58,12 @@ namespace MotoZavodyWeb.Controllers
                 .Select(z => new { z.IdZavod, z.Startovne })
                 .ToDictionary(x => x.IdZavod, x => x.Startovne);
 
-
             return model;
         }
 
         // =====================================
         // ADMIN — PRIHLAŠOVÁNÍ LIBOVOLNÉHO ZÁVODNÍKA
         // =====================================
-
         public IActionResult Create()
         {
             return View(BuildCreateViewModel());
@@ -83,6 +81,18 @@ namespace MotoZavodyWeb.Controllers
                 vm.Castka = model.Castka;
                 vm.TypPlatby = model.TypPlatby;
                 vm.CisloKarty = model.CisloKarty;
+
+                // Pokud je uživatel přihlášen, obnovíme jeho jméno (pro readonly pole)
+                var userId = HttpContext.Session.GetInt32("UserId");
+                if (userId != null)
+                {
+                    var user = _context.Uzivatele.Include(u => u.Zavodnik).FirstOrDefault(u => u.IdUzivatel == userId);
+                    if (user?.Zavodnik != null)
+                    {
+                        vm.JmenoZavodnika = $"{user.Zavodnik.Jmeno} {user.Zavodnik.Prijmeni}";
+                    }
+                }
+
                 return View(vm);
             }
 
@@ -92,7 +102,7 @@ namespace MotoZavodyWeb.Controllers
         // =====================================
         // UŽIVATEL — PŘIHLÁŠENÍ SÁM SEBE
         // =====================================
-        public IActionResult PrihlasitSe()
+        public async Task<IActionResult> PrihlasitSe(int? id)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
 
@@ -115,6 +125,18 @@ namespace MotoZavodyWeb.Controllers
             var vm = BuildCreateViewModel();
             vm.IdZavodnik = user.Zavodnik.IdZavodnik;
             vm.JmenoZavodnika = $"{user.Zavodnik.Jmeno} {user.Zavodnik.Prijmeni}";
+
+            // POKUD PŘIŠLO ID ZÁVODU, PŘEDVYPLNÍME HO A CENU
+            if (id.HasValue)
+            {
+                var zavod = await _context.Zavody.FindAsync(id.Value);
+                if (zavod != null)
+                {
+                    vm.IdZavod = zavod.IdZavod;
+                    vm.Castka = zavod.Startovne;
+                }
+            }
+            // Pokud ID nepřišlo, vm.IdZavod zůstane 0 a ve View se zobrazí Select
 
             return View("Create", vm);
         }
@@ -168,7 +190,7 @@ namespace MotoZavodyWeb.Controllers
             }
             catch (OracleException ex)
             {
-                // závodník je již přihlášen
+                // chyba 1 = duplicitní klíč (závodník je již přihlášen)
                 if (ex.Number == 1)
                 {
                     ModelState.AddModelError("", "⚠ Na tento závod jste již přihlášeni.");
@@ -179,14 +201,22 @@ namespace MotoZavodyWeb.Controllers
                     vm.TypPlatby = model.TypPlatby;
                     vm.CisloKarty = model.CisloKarty;
 
+                    // Pokud je to user, znovu načteme jméno
+                    var userId = HttpContext.Session.GetInt32("UserId");
+                    if (userId != null)
+                    {
+                        var user = _context.Uzivatele.Include(u => u.Zavodnik).FirstOrDefault(u => u.IdUzivatel == userId);
+                        if (user?.Zavodnik != null)
+                        {
+                            vm.JmenoZavodnika = $"{user.Zavodnik.Jmeno} {user.Zavodnik.Prijmeni}";
+                        }
+                    }
+
                     return View("Create", vm);
-
                 }
-
                 throw;
             }
-        }      
-
+        }
 
         // =====================================
         // DELETE
@@ -209,7 +239,5 @@ namespace MotoZavodyWeb.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
-
     }
 }

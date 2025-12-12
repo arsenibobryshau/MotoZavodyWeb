@@ -1,66 +1,65 @@
-﻿@{
+﻿@model MotoZavodyWeb.Models.Zavodnik
+
+@{
     ViewData["Title"] = "Vytvořit závodnický profil";
-    var role = ViewBag.Role as string;
 }
 
 <h2>Vytvořit závodnický profil</h2>
 
-@if (ViewBag.Error != null)
-{
-    <div class="alert alert-danger">@ViewBag.Error</div>
-}
+<div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
 <form asp-action="VytvorZavodnika" method="post">
     @Html.AntiForgeryToken()
 
     <!-- Jméno -->
     <div class="mb-3">
-        <label class="form-label">Jméno</label>
-        <input type="text"
-               name="jmeno"
-               class="form-control"
-               value="@ViewBag.Jmeno"
-               @(role == "USER" ? "readonly" : "") />
+        <label asp-for="Jmeno" class="form-label"></label>
+        <input asp-for="Jmeno" class="form-control" readonly />
+        <span asp-validation-for="Jmeno" class="text-danger"></span>
     </div>
 
     <!-- Příjmení -->
     <div class="mb-3">
-        <label class="form-label">Příjmení</label>
-        <input type="text"
-               name="prijmeni"
-               class="form-control"
-               value="@ViewBag.Prijmeni"
-               @(role == "USER" ? "readonly" : "") />
+        <label asp-for="Prijmeni" class="form-label"></label>
+        <input asp-for="Prijmeni" class="form-control" readonly />
+        <span asp-validation-for="Prijmeni" class="text-danger"></span>
     </div>
 
     <!-- Věk -->
     <div class="mb-3">
-        <label class="form-label">Věk</label>
-        <input type="number" name="vek" class="form-control" />
+        <label asp-for="Vek" class="form-label"></label>
+        <input asp-for="Vek" class="form-control" type="number" />
+        <span asp-validation-for="Vek" class="text-danger"></span>
     </div>
 
     <!-- Pohlaví -->
     <div class="mb-3">
-        <label class="form-label">Pohlaví</label>
-        <select name="pohlavi" class="form-select">
+        <label asp-for="Pohlavi" class="form-label"></label>
+        <select asp-for="Pohlavi" class="form-select">
             <option value="">-- vyber --</option>
             <option value="M">Muž</option>
             <option value="Z">Žena</option>
         </select>
+        <span asp-validation-for="Pohlavi" class="text-danger"></span>
     </div>
 
-    <!-- Úroveň -->
+    <!-- Úroveň zkušenosti -->
     <div class="mb-3">
-        <label class="form-label">Úroveň zkušenosti</label>
-        <select name="urovenZkusenosti" class="form-select">
+        <label asp-for="UrovenZkusenosti" class="form-label"></label>
+        <select asp-for="UrovenZkusenosti" class="form-select">
             <option value="">-- vyber --</option>
             <option value="D">Začátečník</option>
             <option value="C">Mírně pokročilý</option>
             <option value="B">Pokročilý</option>
             <option value="A">Profesionál</option>
         </select>
+        <span asp-validation-for="UrovenZkusenosti" class="text-danger"></span>
     </div>
 
     <button type="submit" class="btn btn-primary">Uložit</button>
     <a asp-action="Profil" class="btn btn-secondary">Zpět na profil</a>
 </form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

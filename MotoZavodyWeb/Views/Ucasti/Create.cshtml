@@ -1,101 +1,130 @@
 ﻿@model MotoZavodyWeb.Models.PrihlaskaCreateViewModel
 
 @{
-    var isAdmin = Context.Session.GetString("UserRole") == "ADMIN";
+    var role = Context.Session.GetString("UserRole");
+    var isAdmin = role == "ADMIN";
+    
+    // Zjistíme, jestli máme předvyplněný závod (z detailu) nebo ne (z menu)
+    bool jeZavodPredvyplnen = Model.IdZavod > 0;
+    
+    // Pokud je admin NEBO závod NENÍ předvyplněn -> povolíme výběr
+    bool povolitVyberZavodu = isAdmin || !jeZavodPredvyplnen;
+
     ViewData["Title"] = isAdmin ? "Přihlášení závodníka na závod" : "Přihlášení na závod";
 }
 
 <h2>@ViewData["Title"]</h2>
 
-<form asp-action="Create" method="post">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-    <!-- ==========================
-         ADMIN: může vybrat závodníka
-         USER: vidí jen sebe (readonly)
-         ========================== -->
-    <!-- ZÁVODNÍK -->
-    @if (isAdmin)
-    {
-        <div class="form-group">
-            <label asp-for="IdZavodnik" class="control-label"></label>
-            <select asp-for="IdZavodnik" class="form-control" asp-items="Model.Zavodnici">
-                <option value="">-- vyberte závodníka --</option>
-            </select>
-            <span asp-validation-for="IdZavodnik" class="text-danger"></span>
-        </div>
-    }
-    else
-    {
-        <div class="form-group">
-            <label class="control-label fw-bold">Závodník</label>
-            <input class="form-control" value="@Model.JmenoZavodnika" readonly />
-            <input type="hidden" asp-for="IdZavodnik" />
-        </div>
-    }
-
-    <!-- ZÁVOD -->
-    <div class="form-group">
-        <label asp-for="IdZavod" class="control-label"></label>
-        <select id="zavodSelect" asp-for="IdZavod" class="form-control">
-            <option value="">-- vyberte závod --</option>
-            @foreach (var zavod in Model.Zavody)
-            {
-                <option value="@zavod.Value"
-                        data-castka="@Model.StartovneDict[int.Parse(zavod.Value)]">
-                    @zavod.Text
-                </option>
-            }
-        </select>
-        <span asp-validation-for="IdZavod" class="text-danger"></span>
-    </div>
-
-    <!-- ČÁSTKA -->
-    <div class="form-group">
-        <label asp-for="Castka" class="control-label"></label>
+<div class="card p-4 shadow-sm">
+    <form asp-action="Create" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
         @if (isAdmin)
         {
-            <input asp-for="Castka" id="Castka" class="form-control" />
+            <div class="form-group mb-3">
+                <label asp-for="IdZavodnik" class="control-label"></label>
+                <select asp-for="IdZavodnik" class="form-control" asp-items="Model.Zavodnici">
+                    <option value="">-- vyberte závodníka --</option>
+                </select>
+                <span asp-validation-for="IdZavodnik" class="text-danger"></span>
+            </div>
         }
         else
         {
-            <input asp-for="Castka" id="Castka" class="form-control" readonly />
+            <div class="form-group mb-3">
+                <label class="control-label fw-bold">Závodník</label>
+                <input class="form-control" value="@Model.JmenoZavodnika" readonly style="background-color: #e9ecef;" />
+                <input type="hidden" asp-for="IdZavodnik" />
+            </div>
         }
 
-        <span asp-validation-for="Castka" class="text-danger"></span>
-    </div>
+        <div class="form-group mb-3">
+            <label asp-for="IdZavod" class="control-label"></label>
 
-    <!-- PLATBA -->
-    <div class="form-group">
-        <label asp-for="TypPlatby" class="control-label"></label>
-        <select asp-for="TypPlatby" class="form-control">
-            <option value="H">Hotově</option>
-            <option value="K">Kartou</option>
-        </select>
-    </div>
+            @if (povolitVyberZavodu)
+            {
+                <select id="zavodSelect" asp-for="IdZavod" class="form-control">
+                    <option value="">-- vyberte závod --</option>
+                    @foreach (var zavod in Model.Zavody)
+                    {
+                        // Pokud by náhodou User už něco vybral a vracelo se to kvůli chybě validace, zachováme výběr
+                        <option value="@zavod.Value"
+                                selected="@(zavod.Value == Model.IdZavod.ToString())"
+                                data-castka="@Model.StartovneDict[int.Parse(zavod.Value)]">
+                            @zavod.Text
+                        </option>
+                    }
+                </select>
+            }
+            else
+            {
+                var nazevZavodu = Model.Zavody
+                .FirstOrDefault(z => z.Value == Model.IdZavod.ToString())?.Text;
 
-    <!-- KARTA -->
-    <div class="form-group">
-        <label asp-for="CisloKarty" class="control-label"></label>
-        <input asp-for="CisloKarty" class="form-control" />
-        <span asp-validation-for="CisloKarty" class="text-danger"></span>
-        <small class="form-text text-muted">Vyplňte pouze při platbě kartou.</small>
-    </div>
+                <input class="form-control"
+                       value="@nazevZavodu"
+                       readonly
+                       style="background-color: #e9ecef;" />
 
-    <br />
+                <input type="hidden" asp-for="IdZavod" />
+            }
+            <span asp-validation-for="IdZavod" class="text-danger"></span>
+        </div>
 
-    <button type="submit" class="btn btn-primary">
-        @(isAdmin ? "Přihlásit závodníka" : "Přihlásit se")
-    </button>
+        <div class="form-group mb-3">
+            <label asp-for="Castka" class="control-label"></label>
+            
+            @if (isAdmin)
+            {
+                <input asp-for="Castka" id="Castka" class="form-control" type="number" />
+            }
+            else
+            {
+                <input asp-for="Castka" id="Castka" class="form-control" 
+                       readonly style="background-color: #e9ecef;" 
+                       asp-format="{0:0}" />
+            }
+            <span asp-validation-for="Castka" class="text-danger"></span>
+        </div>
 
-    <a asp-action="Index" class="btn btn-secondary">Zpět na seznam účastí</a>
-</form>
+        <div class="form-group mb-3">
+            <label asp-for="TypPlatby" class="control-label"></label>
+            <select asp-for="TypPlatby" class="form-control">
+                <option value="H">Hotově</option>
+                <option value="K">Kartou</option>
+            </select>
+        </div>
+
+        <div class="form-group mb-3">
+            <label asp-for="CisloKarty" class="control-label"></label>
+            <input asp-for="CisloKarty" class="form-control" />
+            <span asp-validation-for="CisloKarty" class="text-danger"></span>
+            <small class="form-text text-muted">Vyplňte pouze při platbě kartou.</small>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary px-4">
+                @(isAdmin ? "Přihlásit závodníka" : "Přihlásit se")
+            </button>
+            <a asp-action="Index" class="btn btn-secondary ms-2">Zpět na seznam účastí</a>
+        </div>
+    </form>
+</div>
 
 <script>
-    document.getElementById("zavodSelect").addEventListener("change", function () {
-        var selected = this.options[this.selectedIndex];
-        var castka = selected.getAttribute("data-castka");
-        document.getElementById("Castka").value = castka || "";
-    });
+    // Automatické doplňování částky (funguje pro Admina i pro Usera v režimu výběru)
+    var select = document.getElementById("zavodSelect");
+    if (select) {
+        select.addEventListener("change", function () {
+            var selected = this.options[this.selectedIndex];
+            var castka = selected.getAttribute("data-castka");
+            var inputCastka = document.getElementById("Castka");
+            
+            if (inputCastka && castka) {
+                inputCastka.value = Math.round(parseFloat(castka.replace(',', '.')));
+            } else if (inputCastka) {
+                inputCastka.value = "";
+            }
+        });
+    }
 </script>

@@ -74,6 +74,7 @@
     <div class="card-header bg-dark text-white fw-bold">
         <i class="bi bi-bicycle"></i> Závodnický profil
     </div>
+
     <div class="card-body">
         @if (Model.Zavodnik != null)
         {
@@ -90,7 +91,24 @@
             </a>
         }
     </div>
+
+    @if (Model.Zavodnik != null)
+    {
+        <div class="card-footer bg-light d-flex justify-content-end">
+            <form asp-action="SmazatZavodnickyProfil"
+                  method="post"
+                  onsubmit="return confirm('Opravdu chceš smazat závodnický profil? Tato akce je nevratná.');">
+
+                @Html.AntiForgeryToken()
+
+                <button class="btn btn-danger">
+                    <i class="bi bi-trash"></i> Smazat závodnický profil
+                </button>
+            </form>
+        </div>
+    }
 </div>
+
 
 <div class="card shadow-sm mb-4">
     <div class="card-header bg-success text-white fw-bold">

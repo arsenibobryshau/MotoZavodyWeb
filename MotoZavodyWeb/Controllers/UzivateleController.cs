@@ -320,49 +320,87 @@ namespace MotoZavodyWeb.Controllers
             var check = RequireLogin();
             if (check != null) return check;
 
-            var userId = CurrentUserId!.Value;
-            var uzivatel = _context.Uzivatele.First(u => u.IdUzivatel == userId);
+            var uzivatel = _context.Uzivatele.First(u => u.IdUzivatel == CurrentUserId);
 
             if (uzivatel.IdZavodnik.HasValue)
                 return RedirectToAction("Profil");
 
-            ViewBag.Jmeno = uzivatel.Jmeno;
-            ViewBag.Prijmeni = uzivatel.Prijmeni;
+            // předvyplnění jména z účtu
+            var model = new Zavodnik
+            {
+                Jmeno = uzivatel.Jmeno,
+                Prijmeni = uzivatel.Prijmeni
+            };
 
-            return View();
+            return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult VytvorZavodnika(string jmeno, string prijmeni, int vek, string pohlavi, string urovenZkusenosti)
+        public IActionResult VytvorZavodnika(Zavodnik model)
         {
             var check = RequireLogin();
             if (check != null) return check;
 
-            var userId = CurrentUserId!.Value;
-            var uzivatel = _context.Uzivatele.First(u => u.IdUzivatel == userId);
+            if (!ModelState.IsValid)
+            {
+                // validace z DataAnnotations → zobrazí se ve view
+                return View(model);
+            }
+
+            var uzivatel = _context.Uzivatele.First(u => u.IdUzivatel == CurrentUserId);
 
             if (uzivatel.IdZavodnik.HasValue)
                 return RedirectToAction("Profil");
 
-            var zavodnik = new Zavodnik
-            {
-                Jmeno = jmeno,
-                Prijmeni = prijmeni,
-                Vek = vek,
-                Pohlavi = pohlavi,
-                UrovenZkusenosti = urovenZkusenosti
-            };
-
-            _context.Zavodnici.Add(zavodnik);
+            _context.Zavodnici.Add(model);
             _context.SaveChanges();
 
-            uzivatel.IdZavodnik = zavodnik.IdZavodnik;
+            uzivatel.IdZavodnik = model.IdZavodnik;
             _context.SaveChanges();
 
             TempData["Success"] = "Závodnický profil byl vytvořen!";
             return RedirectToAction("Profil");
         }
+
+        // =====================================================
+        // SMAZAT ZÁVODNICKÝ PROFIL
+        // =====================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SmazatZavodnickyProfil()
+        {
+            var check = RequireLogin();
+            if (check != null) return check;
+
+            var uzivatel = await _context.Uzivatele
+                .Include(u => u.Zavodnik)
+                .FirstAsync(u => u.IdUzivatel == CurrentUserId);
+
+            if (uzivatel.Zavodnik == null)
+            {
+                TempData["Error"] = "Závodnický profil neexistuje.";
+                return RedirectToAction("Profil");
+            }
+
+            int zavodnikId = uzivatel.Zavodnik.IdZavodnik;
+
+            var ucasti = _context.Ucasti.Where(u => u.IdZavodnik == zavodnikId);
+            _context.Ucasti.RemoveRange(ucasti);
+
+            var jezdiNa = _context.JezdiNa.Where(j => j.IdZavodnik == zavodnikId);
+            _context.JezdiNa.RemoveRange(jezdiNa);
+
+            uzivatel.IdZavodnik = null;
+
+            _context.Zavodnici.Remove(uzivatel.Zavodnik);
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Závodnický profil byl úspěšně smazán.";
+            return RedirectToAction("Profil");
+        }
+
 
         // =====================================================
         // PŘIDAT KOLOBĚŽKU
